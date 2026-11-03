@@ -127,6 +127,33 @@ utente configura la propria 2FA. Ruoli:
 Ruoli e azzeramento della 2FA (per esempio dopo la perdita del telefono) si gestiscono anche da
 *Users* nell'interfaccia.
 
+## Da iPad, senza computer
+
+Su iPad Docker non gira, ma tutto il deployment si fa dall'iPad stesso.
+
+1. Installa **Termius** dall'App Store: fa da terminale SSH e da trasferimento file (SFTP).
+2. In Termius: *Keychain* → *+* → *Generate Key* (tipo ED25519). Copia la chiave pubblica.
+3. Da Safari crea il server (punto 2), incollando la chiave pubblica di Termius, e il record DNS
+   (punto 3).
+4. Salva `lgv-manager.zip` in *File* sull'iPad.
+5. In Termius aggiungi il server (*Hosts* → *+*: indirizzo IP, utente, chiave). Apri *SFTP*,
+   collegati al server e carica lo zip nella cartella home.
+6. Apri il terminale sul server e lancia, sostituendo il dominio:
+
+```sh
+sudo apt update && sudo apt -y install unzip
+unzip lgv-manager.zip && cd lgv-manager
+sh docker/install.sh vc.tuodominio.ch "Lake Growth Ventures"
+sudo docker compose exec app python manage.py createsuperuser
+```
+
+`install.sh` installa Docker, crea il file `.env` con chiavi e password casuali e avvia l'app.
+Puoi rilanciarlo senza rischi: un `.env` già esistente resta com'è, e i dati non vengono toccati.
+7. Apri `https://vc.tuodominio.ch` in Safari e configura la 2FA (punto 6).
+
+Per aggiornare l'app: carica il nuovo zip con SFTP, poi
+`unzip -o lgv-manager.zip && cd lgv-manager && sh docker/install.sh vc.tuodominio.ch`.
+
 ## 7. Aggiornare l'applicazione
 
 ```sh
