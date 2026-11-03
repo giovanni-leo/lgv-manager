@@ -1,0 +1,16 @@
+# HTTPS for $DOMAIN. With DOMAIN=localhost Caddy uses its own local CA;
+# with a public domain it obtains a Let's Encrypt certificate automatically.
+{$DOMAIN} {
+	encode zstd gzip
+	request_body {
+		max_size 110MB
+	}
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "same-origin"
+		-Server
+	}
+	# Uploaded files are never served directly: only Django, after login.
+	reverse_proxy app:8000
+}

@@ -1,0 +1,23 @@
+:root { --fg:#1d2433; --muted:#5b6475; --bg:#f7f8fa; --accent:#0b6e4f; --warn:#b54708; }
+* { box-sizing: border-box; }
+body { margin:0; font:16px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif; color:var(--fg); background:var(--bg); }
+.topbar { display:flex; flex-wrap:wrap; gap:.5rem 1rem; align-items:center; justify-content:space-between; padding:.75rem 1rem; background:#fff; border-bottom:1px solid #e3e6eb; }
+.topbar nav { display:flex; gap:1rem; align-items:center; }
+.topbar a, .topbar button { color:var(--accent); text-decoration:none; background:none; border:0; font:inherit; cursor:pointer; padding:0; }
+.brand { font-weight:700; }
+main { max-width:1100px; margin:0 auto; padding:1rem; }
+.stats { display:flex; flex-wrap:wrap; gap:1rem; list-style:none; padding:0; }
+.stats li { background:#fff; border:1px solid #e3e6eb; border-radius:8px; padding:.75rem 1rem; }
+.alert { border-left:4px solid var(--warn); background:#fff; padding:.5rem 1rem; }
+form p { margin:.5rem 0; } input, select { font:inherit; padding:.4rem; max-width:100%; }
+.narrow { max-width:26rem; margin:2rem auto; }
+.card { background:#fff; border:1px solid #e3e6eb; border-radius:10px; padding:1.25rem; }
+.card h1 { margin-top:0; font-size:1.5rem; }
+.card table, .card tbody, .card tr, .card th, .card td { display:block; width:100%; text-align:left; padding:0; }
+.card th { margin-top:.6rem; font-weight:600; }
+.card input[type=text], .card input[type=password], .card input[type=number], .card input:not([type]) { width:100%; padding:.6rem; border:1px solid #c7ccd4; border-radius:6px; font-size:16px; }
+.btn, .card button { display:inline-block; padding:.55rem 1rem; border-radius:6px; border:1px solid #c7ccd4; background:#fff; color:var(--fg); text-decoration:none; font:inherit; cursor:pointer; margin:.75rem .25rem 0 0; }
+.btn-primary, .card button[type=submit]:last-child { background:var(--accent); border-color:var(--accent); color:#fff; }
+.card button[disabled] { display:none; }
+.card img { max-width:100%; height:auto; }
+.errorlist { color:#b42318; padding-left:1rem; }

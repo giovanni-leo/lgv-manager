@@ -1,0 +1,8 @@
+Django>=5.2,<5.3
+psycopg[binary]>=3.2,<4
+django-two-factor-auth>=1.18,<2
+django-otp>=1.6,<2
+django-auditlog>=3.2,<4
+django-htmx>=1.21,<2
+whitenoise>=6.8,<7
+gunicorn>=23,<27

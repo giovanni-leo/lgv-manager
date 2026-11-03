@@ -1,0 +1,22 @@
+{% extends "base.html" %}{% load i18n %}
+{% block content %}
+<h1>{% translate "Home" %}</h1>
+<ul class="stats">
+  <li><b>{{ n_companies }}</b> {% translate "companies" %}</li>
+  <li><b>{{ n_deals }}</b> {% translate "deals" %}</li>
+  <li><b>{{ n_investments }}</b> {% translate "investments" %}</li>
+</ul>
+{% if warnings %}
+<section class="alert">
+  <h2>{% translate "Cap table checks" %}</h2>
+  <ul>
+  {% for w in warnings %}
+    <li><a href="{% url 'admin:core_company_change' w.company_id %}">{{ w.company_name }} – {{ w.share_class }}</a>:
+      {% if w.inconsistent %}{% translate "my shares exceed the shares outstanding" %}{% endif %}{% if w.inconsistent and w.missing_issuance %}; {% endif %}{% if w.missing_issuance %}{% translate "issuance events are missing" %}{% endif %}{% if w.negative_position %}{% if w.inconsistent or w.missing_issuance %}; {% endif %}{% translate "more shares sold than held" %}{% endif %}
+    </li>
+  {% endfor %}
+  </ul>
+</section>
+{% endif %}
+<p><a href="{% url 'admin:index' %}">{% translate "Go to data entry" %}</a></p>
+{% endblock %}

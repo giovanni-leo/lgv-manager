@@ -1,0 +1,987 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-11-03 14:20+0100\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+#: config/settings.py:129
+msgid "Italian"
+msgstr ""
+
+#: config/settings.py:129
+msgid "French"
+msgstr ""
+
+#: config/settings.py:129
+msgid "English"
+msgstr ""
+
+#: core/admin.py:102
+msgid "Location"
+msgstr ""
+
+#: core/admin.py:103
+msgid "Cap table today"
+msgstr ""
+
+#: core/admin.py:104
+msgid "Record"
+msgstr ""
+
+#: core/admin.py:114 core/models/documents.py:43
+msgid "Cap table"
+msgstr ""
+
+#: core/admin.py:120
+msgid "No share classes yet."
+msgstr ""
+
+#: core/admin.py:127
+msgid "my shares exceed the class"
+msgstr ""
+
+#: core/admin.py:128
+msgid "issuance events missing"
+msgstr ""
+
+#: core/admin.py:129
+msgid "negative position"
+msgstr ""
+
+#: core/admin.py:137
+msgid "Basic as-converted"
+msgstr ""
+
+#: core/admin.py:138
+msgid "Fully diluted"
+msgstr ""
+
+#: core/admin.py:139
+msgid "Option pool"
+msgstr ""
+
+#: core/admin.py:140
+msgid "Warrants"
+msgstr ""
+
+#: core/admin.py:145
+msgid "Class"
+msgstr ""
+
+#: core/admin.py:145
+msgid "Outstanding"
+msgstr ""
+
+#: core/admin.py:145
+msgid "Conversion ratio"
+msgstr ""
+
+#: core/admin.py:145
+msgid "My shares"
+msgstr ""
+
+#: core/admin.py:145
+#, python-format
+msgid "% of class"
+msgstr ""
+
+#: core/admin_site.py:10 core/admin_site.py:11 core/apps.py:28
+msgid "VC Manager"
+msgstr ""
+
+#: core/admin_site.py:12
+msgid "Data management"
+msgstr ""
+
+#: core/models/captable.py:24 core/models/captable.py:85
+#: core/models/captable.py:161 core/models/captable.py:195
+#: core/models/captable.py:292 core/models/captable.py:343
+#: core/models/documents.py:49 core/models/monitoring.py:14
+#: core/models/monitoring.py:64 core/models/monitoring.py:108
+#: core/models/parties.py:65 core/models/parties.py:84
+#: core/models/pipeline.py:35
+msgid "company"
+msgstr ""
+
+#: core/models/captable.py:25 core/models/parties.py:18
+#: core/models/parties.py:48
+msgid "name"
+msgstr ""
+
+#: core/models/captable.py:25
+msgid "e.g. Common, Series A, Series B"
+msgstr ""
+
+#: core/models/captable.py:26
+msgid "common shares"
+msgstr ""
+
+#: core/models/captable.py:27
+msgid "seniority"
+msgstr ""
+
+#: core/models/captable.py:28
+msgid "Higher means more senior in liquidation."
+msgstr ""
+
+#: core/models/captable.py:29
+msgid "nominal value"
+msgstr ""
+
+#: core/models/captable.py:30
+msgid "original issue price"
+msgstr ""
+
+#: core/models/captable.py:33
+msgid "liquidation preference (×)"
+msgstr ""
+
+#: core/models/captable.py:34
+msgid "participating"
+msgstr ""
+
+#: core/models/captable.py:36
+msgid "conversion ratio"
+msgstr ""
+
+#: core/models/captable.py:37
+msgid "Common shares obtained for one share of this class."
+msgstr ""
+
+#: core/models/captable.py:38 core/models/captable.py:97
+#: core/models/captable.py:166 core/models/captable.py:216
+#: core/models/captable.py:303 core/models/captable.py:352
+#: core/models/documents.py:74 core/models/monitoring.py:21
+#: core/models/monitoring.py:72 core/models/parties.py:21
+#: core/models/parties.py:85 core/models/pipeline.py:52
+msgid "notes"
+msgstr ""
+
+#: core/models/captable.py:43 core/models/captable.py:87
+#: core/models/captable.py:201 core/models/captable.py:296
+#: core/models/captable.py:349
+msgid "share class"
+msgstr ""
+
+#: core/models/captable.py:44
+msgid "share classes"
+msgstr ""
+
+#: core/models/captable.py:62
+msgid "The share class belongs to another company."
+msgstr ""
+
+#: core/models/captable.py:77
+msgid "Issuance"
+msgstr ""
+
+#: core/models/captable.py:78
+msgid "Conversion in"
+msgstr ""
+
+#: core/models/captable.py:79
+msgid "Conversion out"
+msgstr ""
+
+#: core/models/captable.py:80
+msgid "Buyback"
+msgstr ""
+
+#: core/models/captable.py:81
+msgid "Cancellation"
+msgstr ""
+
+#: core/models/captable.py:82
+msgid "Split / reverse split"
+msgstr ""
+
+#: core/models/captable.py:88
+msgid "event date"
+msgstr ""
+
+#: core/models/captable.py:89
+msgid "event type"
+msgstr ""
+
+#: core/models/captable.py:90
+msgid "shares delta"
+msgstr ""
+
+#: core/models/captable.py:91
+msgid "Positive or negative. Computed automatically for splits."
+msgstr ""
+
+#: core/models/captable.py:92
+msgid "split ratio"
+msgstr ""
+
+#: core/models/captable.py:93
+msgid "Only for splits: new shares per old share (0.1 = 1-for-10)."
+msgstr ""
+
+#: core/models/captable.py:94 core/models/captable.py:206
+#: core/models/captable.py:347
+msgid "price per share"
+msgstr ""
+
+#: core/models/captable.py:96 core/models/captable.py:215
+msgid "source document"
+msgstr ""
+
+#: core/models/captable.py:102 core/models/documents.py:128
+msgid "share event"
+msgstr ""
+
+#: core/models/captable.py:103
+msgid "share events"
+msgstr ""
+
+#: core/models/captable.py:134
+msgid "A split needs a ratio."
+msgstr ""
+
+#: core/models/captable.py:136
+msgid "Only splits have a ratio."
+msgstr ""
+
+#: core/models/captable.py:162 core/models/monitoring.py:15
+msgid "as of"
+msgstr ""
+
+#: core/models/captable.py:163
+msgid "pool size (granted + ungranted)"
+msgstr ""
+
+#: core/models/captable.py:164
+msgid "granted"
+msgstr ""
+
+#: core/models/captable.py:165
+msgid "warrants outstanding"
+msgstr ""
+
+#: core/models/captable.py:171
+msgid "option pool"
+msgstr ""
+
+#: core/models/captable.py:172
+msgid "option pools"
+msgstr ""
+
+#: core/models/captable.py:189
+msgid "Equity"
+msgstr ""
+
+#: core/models/captable.py:190
+msgid "Convertible loan"
+msgstr ""
+
+#: core/models/captable.py:191
+msgid "SAFE"
+msgstr ""
+
+#: core/models/captable.py:192
+msgid "Warrant"
+msgstr ""
+
+#: core/models/captable.py:197 core/models/captable.py:294
+#: core/models/parties.py:26
+msgid "investing entity"
+msgstr ""
+
+#: core/models/captable.py:199 core/models/documents.py:51
+#: core/models/monitoring.py:110 core/models/pipeline.py:59
+#: core/models/pipeline.py:96
+msgid "deal"
+msgstr ""
+
+#: core/models/captable.py:202
+msgid "investment date"
+msgstr ""
+
+#: core/models/captable.py:203
+msgid "instrument"
+msgstr ""
+
+#: core/models/captable.py:204
+msgid "shares"
+msgstr ""
+
+#: core/models/captable.py:205
+msgid "Required for equity. For warrants: shares obtainable."
+msgstr ""
+
+#: core/models/captable.py:207
+msgid "amount"
+msgstr ""
+
+#: core/models/captable.py:208
+msgid "Cash invested; 0 for shares received on conversion."
+msgstr ""
+
+#: core/models/captable.py:210 core/models/captable.py:302
+msgid "FX to CHF"
+msgstr ""
+
+#: core/models/captable.py:211
+msgid "CHF per unit of currency on the investment date."
+msgstr ""
+
+#: core/models/captable.py:213
+msgid "converted from"
+msgstr ""
+
+#: core/models/captable.py:221 core/models/captable.py:259
+#: core/models/documents.py:126
+msgid "investment"
+msgstr ""
+
+#: core/models/captable.py:222 templates/core/home.html:7
+msgid "investments"
+msgstr ""
+
+#: core/models/captable.py:248
+msgid "Equity investments need a number of shares."
+msgstr ""
+
+#: core/models/captable.py:250
+msgid "Equity investments need a share class."
+msgstr ""
+
+#: core/models/captable.py:252
+msgid "The deal belongs to another company."
+msgstr ""
+
+#: core/models/captable.py:260
+msgid "interest rate"
+msgstr ""
+
+#: core/models/captable.py:261
+msgid "As a fraction: 0.08 = 8%."
+msgstr ""
+
+#: core/models/captable.py:262
+msgid "discount"
+msgstr ""
+
+#: core/models/captable.py:263
+msgid "As a fraction: 0.20 = 20%."
+msgstr ""
+
+#: core/models/captable.py:264
+msgid "valuation cap"
+msgstr ""
+
+#: core/models/captable.py:265
+msgid "maturity date"
+msgstr ""
+
+#: core/models/captable.py:266
+msgid "converted on"
+msgstr ""
+
+#: core/models/captable.py:270 core/models/captable.py:271
+msgid "convertible terms"
+msgstr ""
+
+#: core/models/captable.py:286
+msgid "Sale"
+msgstr ""
+
+#: core/models/captable.py:287
+msgid "Dividend"
+msgstr ""
+
+#: core/models/captable.py:288
+msgid "Distribution"
+msgstr ""
+
+#: core/models/captable.py:289
+msgid "Escrow release"
+msgstr ""
+
+#: core/models/captable.py:297
+msgid "realized on"
+msgstr ""
+
+#: core/models/captable.py:298 core/models/monitoring.py:114
+#: core/models/parties.py:19
+msgid "kind"
+msgstr ""
+
+#: core/models/captable.py:299
+msgid "shares sold"
+msgstr ""
+
+#: core/models/captable.py:300
+msgid "proceeds"
+msgstr ""
+
+#: core/models/captable.py:308
+msgid "realization"
+msgstr ""
+
+#: core/models/captable.py:309
+msgid "realizations"
+msgstr ""
+
+#: core/models/captable.py:330
+msgid "Say which share class was sold."
+msgstr ""
+
+#: core/models/captable.py:337
+msgid "Financing round"
+msgstr ""
+
+#: core/models/captable.py:338
+msgid "Offer"
+msgstr ""
+
+#: core/models/captable.py:339
+msgid "Internal fair value"
+msgstr ""
+
+#: core/models/captable.py:340
+msgid "Write-off"
+msgstr ""
+
+#: core/models/captable.py:344
+msgid "valuation date"
+msgstr ""
+
+#: core/models/captable.py:345
+msgid "method"
+msgstr ""
+
+#: core/models/captable.py:346
+msgid "post-money valuation"
+msgstr ""
+
+#: core/models/captable.py:350
+msgid "Class the price per share refers to."
+msgstr ""
+
+#: core/models/captable.py:357
+msgid "valuation"
+msgstr ""
+
+#: core/models/captable.py:358
+msgid "valuations"
+msgstr ""
+
+#: core/models/common.py:20 core/models/parties.py:106
+msgid "currency"
+msgstr ""
+
+#: core/models/common.py:46
+msgid "created at"
+msgstr ""
+
+#: core/models/common.py:50
+msgid "updated at"
+msgstr ""
+
+#: core/models/documents.py:37
+msgid "Pitch deck"
+msgstr ""
+
+#: core/models/documents.py:38 core/models/pipeline.py:19
+msgid "Term sheet"
+msgstr ""
+
+#: core/models/documents.py:39
+msgid "Shareholders' agreement"
+msgstr ""
+
+#: core/models/documents.py:40
+msgid "Subscription agreement"
+msgstr ""
+
+#: core/models/documents.py:41
+msgid "Board minutes"
+msgstr ""
+
+#: core/models/documents.py:42
+msgid "Financial statements"
+msgstr ""
+
+#: core/models/documents.py:44 core/models/monitoring.py:41
+msgid "Regulatory"
+msgstr ""
+
+#: core/models/documents.py:45
+msgid "Legal"
+msgstr ""
+
+#: core/models/documents.py:46 core/models/monitoring.py:45
+msgid "Other"
+msgstr ""
+
+#: core/models/documents.py:52 core/models/monitoring.py:66
+msgid "category"
+msgstr ""
+
+#: core/models/documents.py:54 core/models/monitoring.py:65
+msgid "title"
+msgstr ""
+
+#: core/models/documents.py:55
+msgid "original filename"
+msgstr ""
+
+#: core/models/documents.py:57
+msgid "file"
+msgstr ""
+
+#: core/models/documents.py:59
+msgid "MIME type"
+msgstr ""
+
+#: core/models/documents.py:60
+msgid "size (bytes)"
+msgstr ""
+
+#: core/models/documents.py:61
+msgid "SHA-256"
+msgstr ""
+
+#: core/models/documents.py:62
+msgid "document date"
+msgstr ""
+
+#: core/models/documents.py:63
+msgid "uploaded at"
+msgstr ""
+
+#: core/models/documents.py:64
+msgid "extracted text"
+msgstr ""
+
+#: core/models/documents.py:79 core/models/documents.py:124
+msgid "document"
+msgstr ""
+
+#: core/models/documents.py:80
+msgid "documents"
+msgstr ""
+
+#: core/models/documents.py:130 core/models/monitoring.py:121
+msgid "interaction"
+msgstr ""
+
+#: core/models/documents.py:134
+msgid "document link"
+msgstr ""
+
+#: core/models/documents.py:135
+msgid "document links"
+msgstr ""
+
+#: core/models/monitoring.py:16
+msgid "cash"
+msgstr ""
+
+#: core/models/monitoring.py:17
+msgid "monthly burn"
+msgstr ""
+
+#: core/models/monitoring.py:18
+msgid "revenue (TTM)"
+msgstr ""
+
+#: core/models/monitoring.py:19
+msgid "headcount"
+msgstr ""
+
+#: core/models/monitoring.py:26
+msgid "company metric"
+msgstr ""
+
+#: core/models/monitoring.py:27
+msgid "company metrics"
+msgstr ""
+
+#: core/models/monitoring.py:42
+msgid "Clinical"
+msgstr ""
+
+#: core/models/monitoring.py:43
+msgid "Commercial"
+msgstr ""
+
+#: core/models/monitoring.py:44
+msgid "Financing"
+msgstr ""
+
+#: core/models/monitoring.py:48
+msgid "Planned"
+msgstr ""
+
+#: core/models/monitoring.py:49
+msgid "Achieved"
+msgstr ""
+
+#: core/models/monitoring.py:50
+msgid "Delayed"
+msgstr ""
+
+#: core/models/monitoring.py:51
+msgid "Abandoned"
+msgstr ""
+
+#: core/models/monitoring.py:56
+msgid "First-in-human study"
+msgstr ""
+
+#: core/models/monitoring.py:57
+msgid "Pivotal study"
+msgstr ""
+
+#: core/models/monitoring.py:58
+msgid "CE marking"
+msgstr ""
+
+#: core/models/monitoring.py:59
+msgid "FDA 510(k)"
+msgstr ""
+
+#: core/models/monitoring.py:60
+msgid "FDA De Novo"
+msgstr ""
+
+#: core/models/monitoring.py:61
+msgid "FDA PMA"
+msgstr ""
+
+#: core/models/monitoring.py:67
+msgid "standard milestone"
+msgstr ""
+
+#: core/models/monitoring.py:68
+msgid "target date"
+msgstr ""
+
+#: core/models/monitoring.py:69
+msgid "achieved on"
+msgstr ""
+
+#: core/models/monitoring.py:70 core/models/parties.py:57
+msgid "status"
+msgstr ""
+
+#: core/models/monitoring.py:77
+msgid "milestone"
+msgstr ""
+
+#: core/models/monitoring.py:78
+msgid "milestones"
+msgstr ""
+
+#: core/models/monitoring.py:100
+msgid "Meeting"
+msgstr ""
+
+#: core/models/monitoring.py:101
+msgid "Board meeting"
+msgstr ""
+
+#: core/models/monitoring.py:102
+msgid "Call"
+msgstr ""
+
+#: core/models/monitoring.py:103
+msgid "Email"
+msgstr ""
+
+#: core/models/monitoring.py:104
+msgid "News"
+msgstr ""
+
+#: core/models/monitoring.py:105
+msgid "Note"
+msgstr ""
+
+#: core/models/monitoring.py:112 core/models/parties.py:90
+msgid "contact"
+msgstr ""
+
+#: core/models/monitoring.py:113
+msgid "date"
+msgstr ""
+
+#: core/models/monitoring.py:115
+msgid "summary"
+msgstr ""
+
+#: core/models/monitoring.py:116
+msgid "details"
+msgstr ""
+
+#: core/models/monitoring.py:122
+msgid "interactions"
+msgstr ""
+
+#: core/models/parties.py:14
+msgid "Company"
+msgstr ""
+
+#: core/models/parties.py:15
+msgid "Personal"
+msgstr ""
+
+#: core/models/parties.py:16
+msgid "Fund"
+msgstr ""
+
+#: core/models/parties.py:20
+msgid "base currency"
+msgstr ""
+
+#: core/models/parties.py:27
+msgid "investing entities"
+msgstr ""
+
+#: core/models/parties.py:42
+msgid "Prospect"
+msgstr ""
+
+#: core/models/parties.py:43
+msgid "Portfolio"
+msgstr ""
+
+#: core/models/parties.py:44
+msgid "Exited"
+msgstr ""
+
+#: core/models/parties.py:45
+msgid "Written off"
+msgstr ""
+
+#: core/models/parties.py:46
+msgid "Archived"
+msgstr ""
+
+#: core/models/parties.py:49
+msgid "legal name"
+msgstr ""
+
+#: core/models/parties.py:50
+msgid "country"
+msgstr ""
+
+#: core/models/parties.py:51
+msgid "ISO 3166 two-letter code, e.g. CH"
+msgstr ""
+
+#: core/models/parties.py:52
+msgid "city"
+msgstr ""
+
+#: core/models/parties.py:53
+msgid "website"
+msgstr ""
+
+#: core/models/parties.py:54
+msgid "sector"
+msgstr ""
+
+#: core/models/parties.py:55
+msgid "e.g. medical devices, diagnostics, digital health"
+msgstr ""
+
+#: core/models/parties.py:56
+msgid "description"
+msgstr ""
+
+#: core/models/parties.py:66 templates/core/home.html:5
+msgid "companies"
+msgstr ""
+
+#: core/models/parties.py:79
+msgid "full name"
+msgstr ""
+
+#: core/models/parties.py:80
+msgid "email"
+msgstr ""
+
+#: core/models/parties.py:81
+msgid "phone"
+msgstr ""
+
+#: core/models/parties.py:82
+msgid "role"
+msgstr ""
+
+#: core/models/parties.py:91
+msgid "contacts"
+msgstr ""
+
+#: core/models/parties.py:105
+msgid "rate date"
+msgstr ""
+
+#: core/models/parties.py:107
+msgid "CHF per unit"
+msgstr ""
+
+#: core/models/parties.py:112
+msgid "exchange rate"
+msgstr ""
+
+#: core/models/parties.py:113
+msgid "exchange rates"
+msgstr ""
+
+#: core/models/pipeline.py:15
+msgid "Sourced"
+msgstr ""
+
+#: core/models/pipeline.py:16
+msgid "First meeting"
+msgstr ""
+
+#: core/models/pipeline.py:17
+msgid "Analysis"
+msgstr ""
+
+#: core/models/pipeline.py:18
+msgid "Due diligence"
+msgstr ""
+
+#: core/models/pipeline.py:20
+msgid "Invested"
+msgstr ""
+
+#: core/models/pipeline.py:21
+msgid "On hold"
+msgstr ""
+
+#: core/models/pipeline.py:22
+msgid "Passed"
+msgstr ""
+
+#: core/models/pipeline.py:36
+msgid "stage"
+msgstr ""
+
+#: core/models/pipeline.py:39
+msgid "source contact"
+msgstr ""
+
+#: core/models/pipeline.py:40
+msgid "source note"
+msgstr ""
+
+#: core/models/pipeline.py:41
+msgid "round"
+msgstr ""
+
+#: core/models/pipeline.py:42
+msgid "Pre-seed, Seed, Series A, ..."
+msgstr ""
+
+#: core/models/pipeline.py:43
+msgid "round size"
+msgstr ""
+
+#: core/models/pipeline.py:44
+msgid "pre-money valuation"
+msgstr ""
+
+#: core/models/pipeline.py:45
+msgid "proposed ticket"
+msgstr ""
+
+#: core/models/pipeline.py:47
+msgid "next step"
+msgstr ""
+
+#: core/models/pipeline.py:48
+msgid "next step due"
+msgstr ""
+
+#: core/models/pipeline.py:49
+msgid "pass reason"
+msgstr ""
+
+#: core/models/pipeline.py:50
+msgid "opened on"
+msgstr ""
+
+#: core/models/pipeline.py:51
+msgid "closed on"
+msgstr ""
+
+#: core/models/pipeline.py:60 templates/core/home.html:6
+msgid "deals"
+msgstr ""
+
+#: core/models/pipeline.py:97
+msgid "from stage"
+msgstr ""
+
+#: core/models/pipeline.py:98
+msgid "to stage"
+msgstr ""
+
+#: core/models/pipeline.py:99
+msgid "changed at"
+msgstr ""
+
+#: core/models/pipeline.py:104
+msgid "stage change"
+msgstr ""
+
+#: core/models/pipeline.py:105
+msgid "stage history"
+msgstr ""
+
+#: templates/base.html:16
+msgid "Data"
+msgstr ""
+
+#: templates/base.html:17
+msgid "Security"
+msgstr ""
+
+#: templates/base.html:18
+msgid "Log out"
+msgstr ""
+
+#: templates/core/home.html:3
+msgid "Home"
+msgstr ""
+
+#: templates/core/home.html:11
+msgid "Cap table checks"
+msgstr ""
+
+#: templates/core/home.html:15
+msgid "my shares exceed the shares outstanding"
+msgstr ""
+
+#: templates/core/home.html:16
+msgid "issuance events are missing"
+msgstr ""
+
+#: templates/core/home.html:17
+msgid "more shares sold than held"
+msgstr ""
+
+#: templates/core/home.html:23
+msgid "Go to data entry"
+msgstr ""

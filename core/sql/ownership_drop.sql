@@ -1,0 +1,10 @@
+DROP VIEW IF EXISTS v_ownership_company;
+DROP VIEW IF EXISTS v_ownership_by_class;
+DROP VIEW IF EXISTS v_my_shares;
+DROP VIEW IF EXISTS v_class_outstanding;
+DROP FUNCTION IF EXISTS fn_ownership_company(date, bigint);
+DROP FUNCTION IF EXISTS fn_ownership_by_class(date, bigint);
+DROP FUNCTION IF EXISTS fn_my_shares(date);
+DROP FUNCTION IF EXISTS fn_class_outstanding(date);
+DROP FUNCTION IF EXISTS fn_split_factor(bigint, date, date);
+DROP AGGREGATE IF EXISTS numeric_product(numeric);
