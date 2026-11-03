@@ -22,5 +22,5 @@ RUN DJANGO_SECRET_KEY=build python manage.py compilemessages --ignore=.venv \
 
 USER app
 EXPOSE 8000
-ENTRYPOINT ["/app/docker/entrypoint.sh"]
+ENTRYPOINT ["sh", "/app/docker/entrypoint.sh"]
 CMD ["gunicorn", "config.wsgi:application", "--bind", "0.0.0.0:8000", "--workers", "3", "--timeout", "120", "--access-logfile", "-"]

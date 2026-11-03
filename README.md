@@ -29,6 +29,13 @@ genera i codici di backup. Per il server basta impostare `DOMAIN`, `DJANGO_ALLOW
 
 SQL libero: `docker compose exec db psql -U vc vc`.
 
+## Aggiornare senza Git (da file zip)
+
+I dati non stanno nella cartella del codice ma nei volumi Docker (`pgdata`, `media`). Per aggiornare:
+estrai il nuovo zip sopra la cartella esistente, tieni il tuo `.env` e lancia
+`docker compose up -d --build`. Non usare mai `docker compose down -v`: l'opzione `-v` cancella i
+volumi, cioè database e documenti.
+
 ## Sviluppo senza Docker
 
 ```sh
