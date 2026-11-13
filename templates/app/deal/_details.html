@@ -1,0 +1,17 @@
+{% load i18n vc %}<section class="card" id="deal-{{ deal.pk }}-details">
+  <details {% if request.htmx %}open{% endif %}>
+    <summary><h2>{% translate "More details" %}</h2></summary>
+    {% if perms.core.change_deal %}<p><button class="btn small" hx-get="{% url 'section' 'deal' deal.pk 'details' %}?edit=1" hx-target="#deal-{{ deal.pk }}-details" hx-swap="outerHTML">{% translate "Edit" %}</button>
+      <a class="btn small subtle" href="{% admin_change 'deal' deal.pk %}">{% translate "All fields" %}</a></p>{% endif %}
+    <dl class="facts compact">
+      <div><dt>{% translate "Source" %}</dt><dd>{{ deal.source_contact.full_name|default:"–" }}</dd></div>
+      <div><dt>{% translate "Opened" %}</dt><dd>{{ deal.opened_on|date:"j M Y" }}</dd></div>
+      <div><dt>{% translate "Closed" %}</dt><dd>{{ deal.closed_on|date:"j M Y"|default:"–" }}</dd></div>
+    </dl>
+    {% if deal.source_note %}<p><strong>{% translate "Source note" %}:</strong> {{ deal.source_note }}</p>{% endif %}
+    {% if deal.pass_reason %}<p><strong>{% translate "Pass reason" %}:</strong> {{ deal.pass_reason }}</p>{% endif %}
+    {% if deal.notes %}<p class="pre">{{ deal.notes }}</p>{% endif %}
+    <h3>{% translate "Stage history" %}</h3>
+    <ol class="timeline">{% for h in history %}<li><time>{{ h.changed_at|date:"j M Y" }}</time> {{ h.get_from_stage_display|default:"–" }} → <strong>{{ h.get_to_stage_display }}</strong></li>{% endfor %}</ol>
+  </details>
+</section>

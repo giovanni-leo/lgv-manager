@@ -1,0 +1,34 @@
+{% extends "base.html" %}{% load i18n vc %}
+{% block title %}{{ company.name }}{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <p class="crumbs"><a href="{% url 'portfolio' %}">{% translate "Portfolio" %}</a></p>
+    <h1>{{ company.name }} <span class="badge status-{{ company.status }}">{{ company.get_status_display }}</span></h1>
+    <p class="muted">{{ company.sector|default:"" }}{% if company.sector and company.city %} · {% endif %}{{ company.city|default:"" }}
+      {% if company.website %} · <a href="{% if '://' not in company.website %}https://{% endif %}{{ company.website }}" target="_blank" rel="noopener">{% translate "website" %}</a>{% endif %}</p>
+  </div>
+  <div class="head-actions">
+    {% if company.data_room_url %}<a class="btn" href="{{ company.data_room_url }}" target="_blank" rel="noopener">{% translate "Data room" %} ↗</a>{% endif %}
+    {% if perms.core.add_deal %}<a class="btn" href="{% url 'deal_new' %}?company={{ company.pk }}">{% translate "New round" %}</a>{% endif %}
+  </div>
+</div>
+
+{% for d in open_deals %}
+<p class="notice">{% translate "Open round" %}: <a href="{% url 'deal_detail' d.pk %}"><strong>{{ d.round_name|default:_("deal") }}</strong></a>
+  · {{ d.get_stage_display }}{% if d.deadline %} · {% translate "deadline" %} {{ d.deadline|date:"j M Y" }}{% endif %}</p>
+{% endfor %}
+
+<div class="grid">
+  {% include "app/company/_position.html" %}
+  {% include "app/company/_value.html" %}
+  {% include "app/company/_governance.html" %}
+  {% include "app/company/_captable.html" %}
+  {% include "app/company/_investments.html" %}
+  {% include "app/_events.html" %}
+  {% include "app/company/_reports.html" %}
+  {% include "app/_contacts_card.html" %}
+  {% include "app/_documents_card.html" %}
+  {% include "app/company/_profile.html" %}
+</div>
+{% endblock %}

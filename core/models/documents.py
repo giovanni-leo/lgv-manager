@@ -28,7 +28,7 @@ def document_storage_key(instance, filename):
 
 DOCUMENT_CATEGORIES = [
     "pitch_deck", "term_sheet", "shareholders_agreement", "subscription", "board_minutes",
-    "financials", "cap_table", "regulatory", "legal", "other",
+    "financials", "investor_report", "general_assembly", "cap_table", "regulatory", "legal", "other",
 ]
 
 
@@ -40,6 +40,8 @@ class Document(models.Model):
         SUBSCRIPTION = "subscription", _("Subscription agreement")
         BOARD_MINUTES = "board_minutes", _("Board minutes")
         FINANCIALS = "financials", _("Financial statements")
+        INVESTOR_REPORT = "investor_report", _("Investor report")
+        GENERAL_ASSEMBLY = "general_assembly", _("General assembly minutes")
         CAP_TABLE = "cap_table", _("Cap table")
         REGULATORY = "regulatory", _("Regulatory")
         LEGAL = "legal", _("Legal")

@@ -1,0 +1,10 @@
+{% load i18n vc %}<section class="card">
+  <header><h2>{% translate "Documents" %}</h2>
+    {% if perms.core.add_document %}<a class="btn small" href="{% admin_add 'document' company=company.pk deal=deal.pk %}">{% translate "Upload" %}</a>{% endif %}</header>
+  <ul class="docs">
+    {% for d in documents %}
+    <li><a href="{{ d.file.url }}" target="_blank" rel="noopener">{{ d.title }}</a> <a class="muted small" href="{% admin_change 'document' d.pk %}">{% translate "edit" %}</a>
+      <span class="muted">{{ d.get_category_display }}{% if d.document_date %} · {{ d.document_date|date:"j M Y" }}{% endif %}</span></li>
+    {% empty %}<li class="muted">{% translate "No documents yet." %}</li>{% endfor %}
+  </ul>
+</section>

@@ -1,0 +1,14 @@
+{% load i18n vc %}<section class="card">
+  <header><h2>{% translate "Contacts" %}</h2>
+    {% if perms.core.add_contact %}<a class="btn small" href="{% admin_add 'contact' company=company.pk %}">{% translate "Add" %}</a>{% endif %}</header>
+  <ul class="people">
+    {% for row in contacts %}{% with c=row.contact %}
+    <li><strong>{{ c.full_name }}</strong>
+      <span class="muted">{{ c.role|default:"" }}{% if row.label %}{% if c.role %} · {% endif %}{{ row.label }}{% endif %}</span>
+      <span class="links">{% if c.email %}<a href="mailto:{{ c.email }}">{{ c.email }}</a>{% endif %}
+        {% if c.phone %}<a href="tel:{{ c.phone }}">{{ c.phone }}</a>{% endif %}
+        {% if perms.core.change_contact %}<a class="muted" href="{% admin_change 'contact' c.pk %}">{% translate "edit" %}</a>{% endif %}</span>
+    </li>{% endwith %}
+    {% empty %}<li class="muted">{% translate "No contacts yet." %}</li>{% endfor %}
+  </ul>
+</section>

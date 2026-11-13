@@ -120,7 +120,7 @@ class MultiUserTests(TestCase):
     def test_editor_can_change_data_but_not_users(self):
         client = verified_client(self.client, self.make_user("marc", "editor"))
         response = client.post("/admin/core/company/add/", {
-            "name": "Beta", "status": "prospect",
+            "name": "Beta", "status": "prospect", "board_role": "none",
             **{f"{prefix}-{k}": v for prefix in ["share_classes", "share_events", "option_pools",
                                                   "valuations", "metrics", "milestones"]
                for k, v in {"TOTAL_FORMS": "0", "INITIAL_FORMS": "0"}.items()},

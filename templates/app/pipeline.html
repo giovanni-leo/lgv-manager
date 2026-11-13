@@ -1,0 +1,21 @@
+{% extends "base.html" %}{% load i18n vc %}
+{% block title %}{% translate "Pipeline" %}{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1>{% translate "Pipeline" %}</h1>
+  {% if perms.core.add_deal %}<a class="btn primary" href="{% url 'deal_new' %}">{% translate "New deal" %}</a>{% endif %}
+</div>
+<div class="kanban">
+  {% for col in columns %}
+  <section class="column">
+    <h2>{{ col.stage.label }} <span class="count">{{ col.deals|length }}</span></h2>
+    {% for d in col.deals %}{% include "app/_deal_card.html" %}{% empty %}<p class="muted empty">–</p>{% endfor %}
+  </section>
+  {% endfor %}
+</div>
+{% for col in parked %}
+<details class="parked"><summary>{{ col.stage.label }} <span class="count">{{ col.deals|length }}</span></summary>
+  <div class="cards-row">{% for d in col.deals %}{% include "app/_deal_card.html" %}{% empty %}<p class="muted">–</p>{% endfor %}</div>
+</details>
+{% endfor %}
+{% endblock %}

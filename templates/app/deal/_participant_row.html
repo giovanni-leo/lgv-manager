@@ -1,0 +1,11 @@
+{% load i18n vc %}<tr id="participant-{{ p.pk }}-row">
+  <td><strong>{{ p.co_investor.name }}</strong>{% if p.contact %}<br><small class="muted">{{ p.contact.full_name }}</small>{% endif %}{% if p.notes %}<br><small class="muted">{{ p.notes }}</small>{% endif %}</td>
+  <td><span class="badge kind-{{ p.co_investor.kind }}">{{ p.co_investor.get_kind_display }}</span></td>
+  <td>{{ p.get_role_display }}</td>
+  <td><span class="badge st-{{ p.status }}">{{ p.get_status_display }}</span></td>
+  <td class="num">{{ p.amount|money:p.currency }}</td>
+  <td class="row-actions">
+    {% if perms.core.change_roundparticipant %}<button class="btn small" hx-get="{% url 'section' 'participant' p.pk 'row' %}?edit=1" hx-target="#participant-{{ p.pk }}-row" hx-swap="outerHTML">{% translate "Edit" %}</button>{% endif %}
+    {% if perms.core.delete_roundparticipant %}<button class="btn small subtle" hx-post="{% url 'participant_delete' p.pk %}" hx-target="#deal-{{ deal.pk }}-participants" hx-swap="outerHTML" hx-confirm="{% translate 'Remove this investor from the round?' %}">×</button>{% endif %}
+  </td>
+</tr>

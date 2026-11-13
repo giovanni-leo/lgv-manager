@@ -8,11 +8,13 @@ start collapsed with a few columns and a link to the full record.
 from django import forms
 from django.contrib import admin
 from django.db import models
+from django.shortcuts import redirect
 from django.utils import timezone
+from django.utils.http import url_has_allowed_host_and_scheme
 from django.utils.html import format_html, format_html_join
 from django.utils.translation import gettext_lazy as _
 
-from .models import (Company, CompanyMetric, Contact, ConvertibleTerms, Deal, DealStageHistory,
+from .models import (CoInvestor, Company, CompanyMetric, Contact, RoundParticipant, ConvertibleTerms, Deal, DealStageHistory,
                      Document, DocumentLink, FxRate, InvestingEntity, Investment, Interaction,
                      Milestone, OptionPool, Realization, ShareClass, ShareEvent, Valuation)
 from . import admin_users  # noqa: F401  (registers the simplified user admin)
@@ -63,6 +65,31 @@ class ModelAdmin(CompactTextMixin, admin.ModelAdmin):
 
     def get_essential(self, request, obj=None):
         return self.essential
+
+    # Coming from an at-a-glance page (?next=/companies/3/): go back there after saving.
+    def _next_url(self, request):
+        url = request.GET.get("next")
+        if url and url_has_allowed_host_and_scheme(url, {request.get_host()}, request.is_secure()):
+            return url
+        return None
+
+    def response_add(self, request, obj, post_url_continue=None):
+        url = self._next_url(request)
+        if url and not {"_continue", "_addanother"} & set(request.POST):
+            return redirect(url)
+        return super().response_add(request, obj, post_url_continue)
+
+    def response_change(self, request, obj):
+        url = self._next_url(request)
+        if url and not {"_continue", "_addanother", "_saveasnew"} & set(request.POST):
+            return redirect(url)
+        return super().response_change(request, obj)
+
+    def response_delete(self, request, obj_display, obj_id):
+        url = self._next_url(request)
+        if url:
+            return redirect(url)
+        return super().response_delete(request, obj_display, obj_id)
 
 
 def single_entity_id():
@@ -145,6 +172,13 @@ class MilestoneInline(TabularInline):
 class ConvertibleTermsInline(StackedInline):
     model = ConvertibleTerms
     max_num = 1
+
+
+class RoundParticipantInline(TabularInline):
+    model = RoundParticipant
+    fields = ["co_investor", "role", "status", "amount", "currency"]
+    autocomplete_fields = ["co_investor"]
+    show_change_link = False
 
 
 class DealStageHistoryInline(TabularInline):
@@ -234,8 +268,9 @@ class DealAdmin(ModelAdmin):
     list_filter = ["stage"]
     search_fields = ["company__name", "round_name", "notes"]
     autocomplete_fields = ["company", "source_contact"]
-    essential = ["company", "stage", "round_name", "proposed_ticket", "currency", "next_step", "next_step_due"]
-    inlines = [DealStageHistoryInline]
+    essential = ["company", "stage", "round_name", "round_size", "pre_money", "proposed_ticket", "currency",
+                 "deadline", "next_step", "next_step_due"]
+    inlines = [RoundParticipantInline, DealStageHistoryInline]
 
 
 @admin.register(Investment)
@@ -331,8 +366,24 @@ class DocumentAdmin(ModelAdmin):
 class ContactAdmin(ModelAdmin):
     list_display = ["full_name", "company", "role"]
     search_fields = ["full_name", "email", "company__name"]
-    autocomplete_fields = ["company"]
-    essential = ["full_name", "company", "role", "email", "phone"]
+    autocomplete_fields = ["company", "co_investor"]
+    essential = ["full_name", "company", "co_investor", "role", "email", "phone"]
+
+
+@admin.register(CoInvestor)
+class CoInvestorAdmin(ModelAdmin):
+    list_display = ["name", "kind", "city"]
+    list_filter = ["kind"]
+    search_fields = ["name"]
+    essential = ["name", "kind"]
+
+
+@admin.register(RoundParticipant)
+class RoundParticipantAdmin(ModelAdmin):
+    list_display = ["deal", "co_investor", "role", "status", "amount", "currency"]
+    list_filter = ["role", "status"]
+    autocomplete_fields = ["deal", "co_investor", "contact"]
+    essential = ["deal", "co_investor", "role", "status", "amount", "currency"]
 
 
 @admin.register(InvestingEntity)

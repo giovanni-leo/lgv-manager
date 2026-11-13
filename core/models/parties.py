@@ -41,6 +41,19 @@ class InvestingEntity(models.Model):
         return self.name
 
 
+class BoardRole(models.TextChoices):
+    NONE = "none", _("None")
+    OBSERVER = "observer", _("Observer")
+    MEMBER = "member", _("Board member")
+
+
+class ReportingFrequency(models.TextChoices):
+    MONTHLY = "monthly", _("Monthly")
+    QUARTERLY = "quarterly", _("Quarterly")
+    SEMIANNUAL = "semiannual", _("Every six months")
+    ANNUAL = "annual", _("Annual")
+
+
 class Company(models.Model):
     class Status(models.TextChoices):
         PROSPECT = "prospect", _("Prospect")
@@ -60,6 +73,12 @@ class Company(models.Model):
     description = models.TextField(_("description"), blank=True, null=True)
     status = models.TextField(_("status"), choices=Status.choices,
                               default=Status.PROSPECT, db_default=Status.PROSPECT)
+    board_role = models.TextField(_("our board role"), choices=BoardRole.choices,
+                                  default=BoardRole.NONE, db_default=BoardRole.NONE)
+    reporting_frequency = models.TextField(_("reporting frequency"), choices=ReportingFrequency.choices,
+                                           null=True, blank=True)
+    data_room_url = models.TextField(_("data room / reporting link"), null=True, blank=True,
+                                     help_text=_("Where the company shares reports, minutes and the cap table."))
     created_at = created_at_field()
     updated_at = updated_at_field()
 
@@ -72,6 +91,46 @@ class Company(models.Model):
             models.CheckConstraint(
                 condition=Q(status__in=["prospect", "portfolio", "exited", "written_off", "archived"]),
                 name="companies_status_check",
+            ),
+            models.CheckConstraint(condition=Q(board_role__in=["none", "observer", "member"]),
+                                   name="companies_board_role_check"),
+            models.CheckConstraint(
+                condition=Q(reporting_frequency__isnull=True)
+                | Q(reporting_frequency__in=["monthly", "quarterly", "semiannual", "annual"]),
+                name="companies_reporting_frequency_check",
+            ),
+        ]
+
+    def __str__(self):
+        return self.name
+
+
+class CoInvestor(models.Model):
+    """Another investor in a round: a VC, a strategic (corporate) investor, an angel..."""
+
+    class Kind(models.TextChoices):
+        VC = "vc", _("VC")
+        STRATEGIC = "strategic", _("Strategic")
+        ANGEL = "angel", _("Angel")
+        FAMILY_OFFICE = "family_office", _("Family office")
+        PUBLIC = "public", _("Public funding")
+        OTHER = "other", _("Other")
+
+    name = models.TextField(_("name"), unique=True)
+    kind = models.TextField(_("type"), choices=Kind.choices, default=Kind.VC, db_default=Kind.VC)
+    website = models.TextField(_("website"), blank=True, null=True)
+    city = models.TextField(_("city"), blank=True, null=True)
+    notes = models.TextField(_("notes"), blank=True, null=True)
+
+    class Meta:
+        db_table = "co_investors"
+        ordering = ["name"]
+        verbose_name = _("co-investor")
+        verbose_name_plural = _("co-investors")
+        constraints = [
+            models.CheckConstraint(
+                condition=Q(kind__in=["vc", "strategic", "angel", "family_office", "public", "other"]),
+                name="co_investors_kind_check",
             ),
         ]
 
@@ -86,6 +145,9 @@ class Contact(models.Model):
     role = models.TextField(_("role"), blank=True, null=True)
     company = models.ForeignKey(Company, on_delete=models.SET_NULL, null=True, blank=True,
                                 related_name="contacts", verbose_name=_("company"))
+    co_investor = models.ForeignKey(CoInvestor, on_delete=models.SET_NULL, null=True, blank=True,
+                                    related_name="contacts", verbose_name=_("co-investor"),
+                                    help_text=_("For people working at another investor."))
     notes = models.TextField(_("notes"), blank=True, null=True)
 
     class Meta:

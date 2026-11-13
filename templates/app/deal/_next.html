@@ -1,0 +1,14 @@
+{% load i18n vc %}<section class="card" id="deal-{{ deal.pk }}-next">
+  <header><h2>{% translate "Next step" %}</h2>
+    {% if perms.core.change_deal %}<button class="btn small" hx-get="{% url 'section' 'deal' deal.pk 'next' %}?edit=1" hx-target="#deal-{{ deal.pk }}-next" hx-swap="outerHTML">{% translate "Edit" %}</button>{% endif %}</header>
+  {% if deal.next_step %}
+  <p class="big">{{ deal.next_step }}</p>
+  {% if deal.next_step_due %}<p class="{{ deal.next_step_due|due_class }}"><strong>{{ deal.next_step_due|date:"j M Y" }}</strong> · {{ deal.next_step_due|days_left }}</p>{% endif %}
+  {% else %}<p class="muted">{% translate "No next step set." %}</p>{% endif %}
+  {% if ds.lead or ds.strategics %}
+  <dl class="facts compact">
+    <div><dt>{% translate "Lead investor" %}</dt><dd>{{ ds.lead.co_investor.name|default:"–" }}</dd></div>
+    <div><dt>{% translate "Strategics" %}</dt><dd>{% for p in ds.strategics %}{{ p.co_investor.name }}{% if not forloop.last %}, {% endif %}{% empty %}–{% endfor %}</dd></div>
+  </dl>
+  {% endif %}
+</section>

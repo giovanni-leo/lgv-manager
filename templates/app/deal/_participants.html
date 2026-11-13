@@ -1,0 +1,23 @@
+{% load i18n vc %}<section class="card wide" id="deal-{{ deal.pk }}-participants">
+  <header><h2>{% translate "Investors in the round" %}</h2></header>
+  {% if deal.round_size %}
+  <div class="progress" title="{{ ds.committed_pct|default:0 }}%"><div style="width: {{ ds.committed_pct|default:0 }}%"></div></div>
+  <p class="muted">{% blocktranslate with c=ds.committed|money:deal.currency t=deal.round_size|money:deal.currency p=ds.committed_pct|default:0 %}{{ c }} committed or signed, of {{ t }} ({{ p }}%){% endblocktranslate %}</p>
+  {% endif %}
+  <div class="table-scroll"><table class="list stack">
+    <thead><tr><th>{% translate "Investor" %}</th><th>{% translate "Type" %}</th><th>{% translate "Role" %}</th><th>{% translate "Status" %}</th><th class="num">{% translate "Amount" %}</th><th></th></tr></thead>
+    <tbody>
+      {% for p in ds.participants %}{% include "app/deal/_participant_row.html" %}
+      {% empty %}<tr><td colspan="6" class="muted">{% translate "No investors recorded yet." %}</td></tr>{% endfor %}
+    </tbody>
+  </table></div>
+  {% if perms.core.add_roundparticipant %}
+  <form class="quick-add" hx-post="{% url 'participant_add' deal.pk %}" hx-target="#deal-{{ deal.pk }}-participants" hx-swap="outerHTML">
+    {{ participant_form.investor }}{{ participant_form.kind }}{{ participant_form.role }}{{ participant_form.status }}
+    {{ participant_form.amount }}
+    <button class="btn primary" type="submit">{% translate "Add investor" %}</button>
+    {% if participant_form.errors %}<div class="errorlist">{% for f in participant_form %}{{ f.errors }}{% endfor %}</div>{% endif %}
+    <datalist id="co-investor-names">{% for n in co_investor_names %}<option value="{{ n }}">{% endfor %}</datalist>
+  </form>
+  {% endif %}
+</section>

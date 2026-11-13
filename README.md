@@ -12,6 +12,15 @@ Stato: **fase 1, fondamenta** (modelli, migrazioni, funzioni SQL di proprietà, 
 - **Più utenti** con tre ruoli: `viewer` (sola lettura), `editor` (modifica i dati), `admin` (gestisce
   anche gli utenti). 2FA obbligatoria per tutti. Vedi `python manage.py adduser --help`.
 
+Schermate di lavoro (dati chiave in alto, modificabili sul posto):
+
+- **Pipeline**: colonne per fase con round, pre-money, lead, scadenze e prossimo passo.
+- **Opportunità**: round (dimensione, pre/post-money, scadenza, ticket e quota implicita), investitori
+  nel round (VC e strategici, lead, impegni), contatti, diario, documenti.
+- **Portfolio**: quota, investito, valore, multiplo, IRR, runway, ultimo report, prossima assemblea.
+- **Società**: posizione e valore, governance e reporting, cap table, investimenti, eventi, report.
+- **Data**: l'interfaccia completa con tutti i campi, per i casi meno frequenti.
+
 Messa in produzione: vedi **[DEPLOY.md](DEPLOY.md)**.
 
 ## Avvio con Docker (locale o server)

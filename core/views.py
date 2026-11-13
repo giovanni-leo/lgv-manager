@@ -1,9 +1,9 @@
+from django.contrib.auth.decorators import permission_required
 from django.db import connection
-from django.http import HttpResponse, JsonResponse
-from django.shortcuts import render
+from django.http import FileResponse, HttpResponse, JsonResponse
+from django.shortcuts import get_object_or_404
 
-from .models import Company, Deal, Investment
-from .services.ownership import consistency_warnings
+from .models import Document
 
 
 def healthz(request):
@@ -12,21 +12,20 @@ def healthz(request):
     return JsonResponse({"status": "ok"})
 
 
-def home(request):
-    """Placeholder dashboard for phase 1; the real home page arrives in phase 2-3."""
-    context = {
-        "n_companies": Company.objects.count(),
-        "n_deals": Deal.objects.count(),
-        "n_investments": Investment.objects.count(),
-        "warnings": _named(consistency_warnings()),
-    }
-    return render(request, "core/home.html", context)
-
-
-def _named(warnings):
-    names = dict(Company.objects.filter(pk__in={w.company_id for w in warnings}).values_list("pk", "name"))
-    return [{**w.__dict__, "company_name": names.get(w.company_id, "")} for w in warnings]
-
-
 def robots(request):
     return HttpResponse("User-agent: *\nDisallow: /\n", content_type="text/plain")
+
+
+@permission_required("core.view_document", raise_exception=True)
+def document_file(request, path):
+    """Serve an uploaded file to a logged-in user (never directly by the web server).
+
+    Only paths recorded on a document are served, so nothing else on disk can be reached.
+    """
+    document = get_object_or_404(Document, file=path)
+    inline = (document.mime_type or "").startswith(("application/pdf", "image/"))
+    response = FileResponse(document.file.open("rb"), as_attachment=not inline,
+                            filename=document.original_filename, content_type=document.mime_type or None)
+    response["X-Content-Type-Options"] = "nosniff"
+    response["Cache-Control"] = "private, no-store"
+    return response

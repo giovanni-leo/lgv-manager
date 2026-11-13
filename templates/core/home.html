@@ -1,22 +1,56 @@
-{% extends "base.html" %}{% load i18n %}
+{% extends "base.html" %}{% load i18n vc %}
 {% block content %}
-<h1>{% translate "Home" %}</h1>
-<ul class="stats">
-  <li><b>{{ n_companies }}</b> {% translate "companies" %}</li>
-  <li><b>{{ n_deals }}</b> {% translate "deals" %}</li>
-  <li><b>{{ n_investments }}</b> {% translate "investments" %}</li>
-</ul>
-{% if warnings %}
-<section class="alert">
-  <h2>{% translate "Cap table checks" %}</h2>
-  <ul>
-  {% for w in warnings %}
-    <li><a href="{% url 'admin:core_company_change' w.company_id %}">{{ w.company_name }} – {{ w.share_class }}</a>:
-      {% if w.inconsistent %}{% translate "my shares exceed the shares outstanding" %}{% endif %}{% if w.inconsistent and w.missing_issuance %}; {% endif %}{% if w.missing_issuance %}{% translate "issuance events are missing" %}{% endif %}{% if w.negative_position %}{% if w.inconsistent or w.missing_issuance %}; {% endif %}{% translate "more shares sold than held" %}{% endif %}
-    </li>
-  {% endfor %}
-  </ul>
-</section>
-{% endif %}
-<p><a href="{% url 'admin:index' %}">{% translate "Go to data entry" %}</a></p>
+<div class="page-head"><h1>{% translate "Home" %}</h1>
+  {% if perms.core.add_deal %}<a class="btn primary" href="{% url 'deal_new' %}">{% translate "New deal" %}</a>{% endif %}</div>
+<div class="grid">
+  <section class="card">
+    <header><h2>{% translate "Deadlines, next 14 days" %}</h2></header>
+    <ul class="docs">
+      {% for x in deadlines %}
+      <li class="{{ x.date|due_class }}"><a href="{% url 'deal_detail' x.deal.pk %}"><strong>{{ x.deal.company.name }}</strong></a>
+        · {% translate x.label %}{% if x.text %}: {{ x.text|truncatechars:60 }}{% endif %}
+        <span class="muted">{{ x.date|date:"j M" }} · {{ x.date|days_left }}</span></li>
+      {% empty %}<li class="muted">{% translate "Nothing due." %}</li>{% endfor %}
+    </ul>
+  </section>
+  <section class="card">
+    <header><h2>{% translate "Runway alerts" %}</h2></header>
+    <ul class="docs">
+      {% for a in alerts %}
+      <li class="runway-{{ a.runway.level }}"><a href="{% url 'company_detail' a.company.pk %}"><strong>{{ a.company.name }}</strong></a>
+        · {{ a.runway.months }} {% translate "months" %} <span class="muted">({% translate "figures of" %} {{ a.runway.metric.as_of|date:"M Y" }})</span></li>
+      {% empty %}<li class="muted">{% translate "No company below 12 months of runway." %}</li>{% endfor %}
+    </ul>
+  </section>
+  <section class="card">
+    <header><h2>{% translate "Upcoming general assemblies" %}</h2></header>
+    <ul class="docs">
+      {% for i in assemblies %}
+      <li><a href="{% url 'company_detail' i.company_id %}"><strong>{{ i.company.name }}</strong></a> · {{ i.occurred_on|date:"j M Y" }}
+        <span class="muted">{{ i.occurred_on|days_left }}</span></li>
+      {% empty %}<li class="muted">{% translate "None scheduled." %}</li>{% endfor %}
+    </ul>
+  </section>
+  {% if warnings %}
+  <section class="card">
+    <header><h2>{% translate "Cap table checks" %}</h2></header>
+    <ul class="docs">
+      {% for w in warnings %}
+      <li><a href="{% url 'company_detail' w.company_id %}">{{ w.company_name }} – {{ w.share_class }}</a>:
+        {% if w.inconsistent %}{% translate "my shares exceed the shares outstanding" %}{% endif %}{% if w.inconsistent and w.missing_issuance %}; {% endif %}{% if w.missing_issuance %}{% translate "issuance events are missing" %}{% endif %}{% if w.negative_position %}{% if w.inconsistent or w.missing_issuance %}; {% endif %}{% translate "more shares sold than held" %}{% endif %}</li>
+      {% endfor %}
+    </ul>
+  </section>
+  {% endif %}
+  <section class="card">
+    <header><h2>{% translate "Recent activity" %}</h2></header>
+    <ol class="timeline">
+      {% for i in recent %}
+      <li><time>{{ i.occurred_on|date:"j M" }}</time> <span class="badge ev-{{ i.kind }}">{{ i.get_kind_display }}</span>
+        {% if i.deal_id %}<a href="{% url 'deal_detail' i.deal_id %}">{% elif i.company_id %}<a href="{% url 'company_detail' i.company_id %}">{% endif %}{{ i.company.name|default:"" }}{% if i.deal_id or i.company_id %}</a>{% endif %}
+        – {{ i.summary|truncatechars:80 }}</li>
+      {% empty %}<li class="muted">{% translate "Nothing recorded yet." %}</li>{% endfor %}
+    </ol>
+  </section>
+</div>
 {% endblock %}

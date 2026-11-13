@@ -1,0 +1,33 @@
+{% extends "base.html" %}{% load i18n vc %}
+{% block title %}{{ company.name }}{% if deal.round_name %} – {{ deal.round_name }}{% endif %}{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <p class="crumbs"><a href="{% url 'pipeline' %}">{% translate "Pipeline" %}</a> ›
+      <a href="{% url 'company_detail' company.pk %}">{{ company.name }}</a></p>
+    <h1>{{ company.name }}{% if deal.round_name %} <span class="muted">{{ deal.round_name }}</span>{% endif %}</h1>
+    <p class="muted">{{ company.sector|default:"" }}{% if company.sector and company.city %} · {% endif %}{{ company.city|default:"" }}</p>
+  </div>
+  <form class="stage-picker" hx-post="{% url 'deal_stage' deal.pk %}" hx-trigger="change">
+    <label><span>{% translate "Stage" %}</span>
+      <select name="stage" {% if not perms.core.change_deal %}disabled{% endif %}>
+        {% for value, label in stages %}<option value="{{ value }}" {% if value == deal.stage %}selected{% endif %}>{{ label }}</option>{% endfor %}
+      </select></label>
+  </form>
+</div>
+
+{% if deal.stage == "invested" and perms.core.add_investment %}
+<p class="notice">{% translate "This round is marked as invested." %}
+  <a href="{% admin_add 'investment' company=company.pk deal=deal.pk invest_date=deal.closed_on|date:'Y-m-d' amount=deal.proposed_ticket currency=deal.currency instrument='equity' %}">{% translate "Record our investment" %} →</a></p>
+{% endif %}
+
+<div class="grid">
+  {% include "app/deal/_round.html" %}
+  {% include "app/deal/_next.html" %}
+  {% include "app/deal/_participants.html" %}
+  {% include "app/_contacts_card.html" %}
+  {% include "app/_events.html" %}
+  {% include "app/_documents_card.html" %}
+  {% include "app/deal/_details.html" %}
+</div>
+{% endblock %}

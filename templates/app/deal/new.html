@@ -1,0 +1,21 @@
+{% extends "base.html" %}{% load i18n %}
+{% block title %}{% translate "New deal" %}{% endblock %}
+{% block content %}
+<p class="crumbs"><a href="{% url 'pipeline' %}">{% translate "Pipeline" %}</a></p>
+<h1>{% translate "New deal" %}</h1>
+<form method="post" class="card form-grid narrow-form">{% csrf_token %}
+  {{ form.non_field_errors }}
+  <label class="field"><span>{% translate "Existing company" %}</span>{{ form.company }}</label>
+  <label class="field"><span>{% translate "…or new company" %}</span>{{ form.new_company }}</label>
+  <label class="field"><span>{% translate "Sector (new company)" %}</span>{{ form.sector }}</label>
+  <label class="field"><span>{% translate "Round" %}</span>{{ form.round_name }}</label>
+  <label class="field"><span>{% translate "Round size" %}</span>{{ form.round_size }}</label>
+  <label class="field"><span>{% translate "Pre-money valuation" %}</span>{{ form.pre_money }}</label>
+  <label class="field"><span>{% translate "Our ticket" %}</span>{{ form.proposed_ticket }}</label>
+  <label class="field"><span>{% translate "Currency" %}</span>{{ form.currency }}</label>
+  <label class="field"><span>{% translate "Round deadline" %}</span>{{ form.deadline }}</label>
+  <label class="field"><span>{% translate "Source contact" %}</span>{{ form.source_contact }}</label>
+  <div class="actions span-all"><button class="btn primary" type="submit">{% translate "Create" %}</button>
+    <a class="btn" href="{% url 'pipeline' %}">{% translate "Cancel" %}</a></div>
+</form>
+{% endblock %}

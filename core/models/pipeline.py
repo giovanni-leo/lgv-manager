@@ -8,7 +8,7 @@ from django.utils.translation import gettext_lazy as _
 
 from .common import (created_at_field, currency_check, currency_field, money_field,
                      today, updated_at_field)
-from .parties import Company, Contact
+from .parties import CoInvestor, Company, Contact
 
 
 class DealStage(models.TextChoices):
@@ -44,6 +44,8 @@ class Deal(models.Model):
     pre_money = money_field(_("pre-money valuation"))
     proposed_ticket = money_field(_("proposed ticket"))
     currency = currency_field()
+    deadline = models.DateField(_("round deadline"), blank=True, null=True,
+                                help_text=_("Closing or decision deadline of the round."))
     next_step = models.TextField(_("next step"), blank=True, null=True)
     next_step_due = models.DateField(_("next step due"), blank=True, null=True)
     pass_reason = models.TextField(_("pass reason"), blank=True, null=True)
@@ -113,3 +115,54 @@ class DealStageHistory(models.Model):
 
     def __str__(self):
         return f"{self.from_stage or '–'} → {self.to_stage}"
+
+
+class RoundParticipant(models.Model):
+    """Who else is in the round, and how far along they are."""
+
+    class Role(models.TextChoices):
+        LEAD = "lead", _("Lead")
+        CO_LEAD = "co_lead", _("Co-lead")
+        PARTICIPANT = "participant", _("Participant")
+
+    class Status(models.TextChoices):
+        CONTACTED = "contacted", _("Contacted")
+        INTERESTED = "interested", _("Interested")
+        COMMITTED = "committed", _("Committed")
+        SIGNED = "signed", _("Signed")
+        DECLINED = "declined", _("Declined")
+
+    deal = models.ForeignKey(Deal, on_delete=models.CASCADE, related_name="participants",
+                             verbose_name=_("deal"))
+    co_investor = models.ForeignKey(CoInvestor, on_delete=models.PROTECT, related_name="participations",
+                                    verbose_name=_("co-investor"))
+    role = models.TextField(_("role"), choices=Role.choices, default=Role.PARTICIPANT,
+                            db_default=Role.PARTICIPANT)
+    status = models.TextField(_("status"), choices=Status.choices, default=Status.INTERESTED,
+                              db_default=Status.INTERESTED)
+    amount = money_field(_("amount"))
+    currency = currency_field()
+    contact = models.ForeignKey(Contact, on_delete=models.SET_NULL, null=True, blank=True,
+                                related_name="round_participations", verbose_name=_("contact"))
+    notes = models.TextField(_("notes"), blank=True, null=True)
+
+    class Meta:
+        db_table = "round_participants"
+        ordering = ["deal", "role", "co_investor__name"]
+        verbose_name = _("round participant")
+        verbose_name_plural = _("round participants")
+        constraints = [
+            models.UniqueConstraint(fields=["deal", "co_investor"], name="round_participants_deal_investor_key"),
+            models.CheckConstraint(condition=Q(role__in=["lead", "co_lead", "participant"]),
+                                   name="round_participants_role_check"),
+            models.CheckConstraint(
+                condition=Q(status__in=["contacted", "interested", "committed", "signed", "declined"]),
+                name="round_participants_status_check",
+            ),
+            models.CheckConstraint(condition=Q(amount__isnull=True) | Q(amount__gte=0),
+                                   name="round_participants_amount_check"),
+            currency_check("round_participants_currency_check"),
+        ]
+
+    def __str__(self):
+        return f"{self.co_investor} ({self.get_role_display()})"

@@ -1,0 +1,14 @@
+{% load i18n %}{% if row %}<tr id="{{ section_id }}" class="editing"><td colspan="6">{% else %}<section class="card editing" id="{{ section_id }}">{% endif %}
+<form hx-post="{{ url }}" hx-target="#{{ section_id }}" hx-swap="outerHTML" class="form-grid">
+  {{ form.non_field_errors }}
+  {% for field in form %}
+  <label class="field{% if field.errors %} has-error{% endif %}{% if field.field.widget.input_type == 'textarea' or field.name in 'notes description details' %} span-all{% endif %}">
+    <span>{{ field.label }}</span>{{ field }}{{ field.errors }}
+  </label>
+  {% endfor %}
+  <div class="actions span-all">
+    <button class="btn primary" type="submit">{% translate "Save" %}</button>
+    <button class="btn" type="button" hx-get="{{ url }}" hx-target="#{{ section_id }}" hx-swap="outerHTML">{% translate "Cancel" %}</button>
+  </div>
+</form>
+{% if row %}</td></tr>{% else %}</section>{% endif %}

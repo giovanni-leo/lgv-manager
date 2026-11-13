@@ -13,6 +13,10 @@ with ``manage.py sync_db_constraints`` after a migration alters a foreign key.
 # (table, column, referenced table, ON DELETE action)
 FK_ACTIONS = [
     ("contacts", "company_id", "companies", "SET NULL"),
+    ("contacts", "co_investor_id", "co_investors", "SET NULL"),
+    ("round_participants", "deal_id", "deals", "CASCADE"),
+    ("round_participants", "co_investor_id", "co_investors", "NO ACTION"),
+    ("round_participants", "contact_id", "contacts", "SET NULL"),
     ("deals", "company_id", "companies", "CASCADE"),
     ("deals", "source_contact_id", "contacts", "SET NULL"),
     ("deal_stage_history", "deal_id", "deals", "CASCADE"),
@@ -58,6 +62,12 @@ _RECREATE_FK = """
 DO $$
 DECLARE r record;
 BEGIN
+  -- Skip tables and columns that a later migration has not created yet.
+  IF NOT EXISTS (SELECT 1 FROM pg_attribute
+                 WHERE attrelid = to_regclass('{table}') AND attname = '{column}' AND NOT attisdropped)
+     OR to_regclass('{ref}') IS NULL THEN
+    RETURN;
+  END IF;
   FOR r IN
     SELECT con.conname
     FROM pg_constraint con
@@ -67,9 +77,9 @@ BEGIN
   LOOP
     EXECUTE format('ALTER TABLE {table} DROP CONSTRAINT %I', r.conname);
   END LOOP;
+  ALTER TABLE {table} ADD CONSTRAINT {table}_{column}_fkey
+    FOREIGN KEY ({column}) REFERENCES {ref}(id) ON DELETE {action} DEFERRABLE INITIALLY DEFERRED;
 END $$;
-ALTER TABLE {table} ADD CONSTRAINT {table}_{column}_fkey
-  FOREIGN KEY ({column}) REFERENCES {ref}(id) ON DELETE {action} DEFERRABLE INITIALLY DEFERRED;
 """
 
 _COMPOSITE_FK = """

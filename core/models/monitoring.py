@@ -101,6 +101,8 @@ class Interaction(models.Model):
         BOARD = "board", _("Board meeting")
         CALL = "call", _("Call")
         EMAIL = "email", _("Email")
+        GENERAL_ASSEMBLY = "general_assembly", _("General assembly")
+        REPORT = "report", _("Report received")
         NEWS = "news", _("News")
         NOTE = "note", _("Note")
 
@@ -122,7 +124,8 @@ class Interaction(models.Model):
         verbose_name_plural = _("interactions")
         constraints = [
             models.CheckConstraint(
-                condition=Q(kind__in=["meeting", "board", "call", "email", "news", "note"]),
+                condition=Q(kind__in=["meeting", "board", "call", "email", "general_assembly", "report",
+                                      "news", "note"]),
                 name="interactions_kind_check",
             ),
         ]

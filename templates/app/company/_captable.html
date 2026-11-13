@@ -1,0 +1,20 @@
+{% load i18n vc %}<section class="card wide">
+  <header><h2>{% translate "Cap table today" %}</h2>
+    {% if perms.core.change_company %}<a class="btn small" href="{% admin_change 'company' company.pk %}">{% translate "Edit classes and events" %}</a>{% endif %}</header>
+  {% if s.classes %}
+  <div class="table-scroll"><table class="list">
+    <thead><tr><th>{% translate "Class" %}</th><th class="num">{% translate "Outstanding" %}</th><th class="num">{% translate "Ours" %}</th><th class="num">{% translate "% of class" %}</th><th class="num">{% translate "Conversion" %}</th></tr></thead>
+    <tbody>{% for c in s.classes %}
+      <tr><td>{{ c.share_class }}{% if c.has_warning %} <span class="badge warn">⚠</span>{% endif %}</td>
+        <td class="num">{{ c.shares_outstanding|num }}</td><td class="num">{{ c.my_shares|num }}</td>
+        <td class="num">{{ c.pct_of_class|pct }}</td><td class="num">{{ c.conversion_ratio|floatformat:"-2" }}×</td></tr>
+    {% endfor %}</tbody>
+  </table></div>
+  <p><strong>{{ s.ownership.pct_fully_diluted|pct }}</strong> {% translate "fully diluted" %} · <strong>{{ s.ownership.pct_basic|pct }}</strong> {% translate "basic" %}
+    <span class="muted">· {% translate "option pool" %} {{ s.ownership.option_pool|num }} · {% translate "warrants" %} {{ s.ownership.warrants|num }}</span></p>
+  {% for c in s.warnings %}<p class="notice">⚠ {{ c.share_class }}:
+    {% if c.inconsistent %}{% translate "our shares exceed the shares outstanding" %}. {% endif %}
+    {% if c.missing_issuance %}{% translate "issuance events are missing" %}. {% endif %}
+    {% if c.negative_position %}{% translate "more shares sold than held" %}.{% endif %}</p>{% endfor %}
+  {% else %}<p class="muted">{% translate "No share classes yet." %}</p>{% endif %}
+</section>

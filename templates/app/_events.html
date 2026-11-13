@@ -1,0 +1,18 @@
+{% load i18n %}<section class="card" id="events-card">
+  <header><h2>{% translate "Activity and events" %}</h2></header>
+  {% if perms.core.add_interaction %}
+  <form class="quick-add" hx-post="{% url 'interaction_add' %}" hx-target="#events-card" hx-swap="outerHTML">
+    {% for k, v in interaction_target.items %}<input type="hidden" name="{{ k }}" value="{{ v }}">{% endfor %}
+    {{ interaction_form.occurred_on }}{{ interaction_form.kind }}
+    {{ interaction_form.summary }}
+    <button class="btn primary" type="submit">{% translate "Add" %}</button>
+    {% if interaction_form.errors %}<div class="errorlist">{% for f in interaction_form %}{{ f.errors }}{% endfor %}</div>{% endif %}
+  </form>
+  {% endif %}
+  <ol class="timeline">
+    {% for e in events %}
+    <li><time datetime="{{ e.date|date:'Y-m-d' }}">{{ e.date|date:"j M Y" }}</time>
+      <span class="badge ev-{{ e.code }}">{{ e.kind }}</span> {{ e.title }}</li>
+    {% empty %}<li class="muted">{% translate "Nothing recorded yet." %}</li>{% endfor %}
+  </ol>
+</section>

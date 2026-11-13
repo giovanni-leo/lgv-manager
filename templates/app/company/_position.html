@@ -1,0 +1,13 @@
+{% load i18n vc %}<section class="card">
+  <header><h2>{% translate "Our position" %}</h2></header>
+  <dl class="facts">
+    <div><dt>{% translate "Stake, fully diluted" %}</dt><dd>{{ s.ownership.pct_fully_diluted|pct }}</dd></div>
+    <div><dt>{% translate "Stake, basic" %}</dt><dd>{{ s.ownership.pct_basic|pct }}</dd></div>
+    <div><dt>{% translate "Invested" %}</dt><dd>{{ s.invested_chf|money:"CHF" }}</dd></div>
+    <div><dt>{% translate "Value of our stake" %}</dt><dd>{{ s.stake_value_chf|money:"CHF" }}</dd></div>
+    <div><dt>{% translate "Multiple" %}</dt><dd>{{ s.moic|multiple }}</dd></div>
+    <div><dt>{% translate "IRR" %}</dt><dd>{{ s.irr|ratio_pct }}</dd></div>
+  </dl>
+  {% if s.realized_chf %}<p class="muted">{% translate "Realized so far" %}: {{ s.realized_chf|money:"CHF" }}</p>{% endif %}
+  {% if s.missing_fx %}<p class="notice">{% translate "An exchange rate is missing: add it under Data › Exchange rates." %}</p>{% endif %}
+</section>
