@@ -1,0 +1,276 @@
+"""Background jobs: web research and email analysis, turned into suggestions."""
+
+import hashlib
+import logging
+import re
+from datetime import timedelta
+from urllib.parse import urlsplit
+
+from django.core.files.base import ContentFile
+from django.db import transaction
+from django.db.models import Q
+from django.utils import timezone
+
+from core.models import (AiJob, Company, Contact, Deal, DealStage, Document, InboundEmail, Interaction,
+                         Suggestion)
+
+from . import claude, mail
+from .apply import parse_date
+
+log = logging.getLogger(__name__)
+OPEN_STAGES = ["sourced", "first_meeting", "analysis", "due_diligence", "term_sheet", "on_hold"]
+LEGAL_SUFFIXES = r"\b(sa|ag|gmbh|sàrl|sarl|ltd|limited|inc|llc|bv|nv|sas|srl|spa|plc|s\.a\.|a\.g\.)\b"
+FIELD_LABELS = {"legal_name": "Legal name", "website": "Website", "sector": "Sector", "city": "City",
+                "country": "Country", "description": "Description", "round_name": "Round",
+                "round_size": "Round size", "pre_money": "Pre-money valuation",
+                "proposed_ticket": "Ticket proposed to us", "currency": "Currency", "deadline": "Round deadline",
+                "next_step": "Next step"}
+
+
+# --- Queueing --------------------------------------------------------------------------
+
+def queue_research(company, deal=None, user=None):
+    """Queue a web search for a company, unless one is already waiting or running."""
+    active = company.ai_jobs.filter(kind=AiJob.Kind.WEB_RESEARCH, status__in=["queued", "running"]).first()
+    return active or AiJob.objects.create(kind=AiJob.Kind.WEB_RESEARCH, company=company, deal=deal,
+                                          requested_by=user)
+
+
+def claim_next_job():
+    with transaction.atomic():
+        job = (AiJob.objects.select_for_update(skip_locked=True).filter(status=AiJob.Status.QUEUED)
+               .order_by("created_at").first())
+        if job:
+            job.status, job.started_at = AiJob.Status.RUNNING, timezone.now()
+            job.save(update_fields=["status", "started_at"])
+        return job
+
+
+def fail_stale_jobs(minutes=45):
+    """Jobs left running by a worker that stopped."""
+    cutoff = timezone.now() - timedelta(minutes=minutes)
+    return AiJob.objects.filter(status=AiJob.Status.RUNNING, started_at__lt=cutoff).update(
+        status=AiJob.Status.FAILED, finished_at=timezone.now(), error="Interrupted (worker restarted).")
+
+
+def run_job(job):
+    try:
+        if job.kind == AiJob.Kind.WEB_RESEARCH:
+            run_research(job)
+        elif job.kind == AiJob.Kind.EMAIL:
+            run_email(job)
+        job.status = AiJob.Status.DONE
+    except Exception as exc:  # the job records the failure; the worker keeps running
+        log.exception("Job %s failed", job.pk)
+        job.status, job.error = AiJob.Status.FAILED, _explain(exc)[:2000]
+        if job.inbound_email_id:
+            InboundEmail.objects.filter(pk=job.inbound_email_id).update(status=InboundEmail.Status.FAILED,
+                                                                        note=job.error)
+    job.finished_at = timezone.now()
+    job.save()
+    return job
+
+
+def _explain(exc):
+    """A message a person can act on."""
+    import anthropic
+
+    if isinstance(exc, anthropic.AuthenticationError):
+        return "The Anthropic API key is not valid: check ANTHROPIC_API_KEY in the .env file."
+    if isinstance(exc, anthropic.PermissionDeniedError):
+        return "The Anthropic API key is not allowed to use this model or tool (check the account settings)."
+    if isinstance(exc, anthropic.RateLimitError):
+        return "Too many requests to Claude right now, or the account has run out of credit. Try again later."
+    if isinstance(exc, anthropic.APIConnectionError):
+        return "Could not reach the Anthropic API (network). Try again later."
+    return f"{type(exc).__name__}: {exc}"
+
+
+def _record_usage(job, usage):
+    job.input_tokens += usage.input_tokens
+    job.output_tokens += usage.output_tokens
+    job.web_searches += usage.web_searches
+
+
+# --- Building suggestions -------------------------------------------------------------------
+
+def _norm(value):
+    return re.sub(r"\s+", " ", str(value or "")).strip().lower()
+
+
+def _suggest(job, company, deal, target, payload, label, source_url=None, evidence=None, confidence=None):
+    """Create a pending suggestion unless the same one is already pending."""
+    if Suggestion.objects.filter(company=company, target=target, label=label, status="pending").exists():
+        return None
+    return Suggestion.objects.create(job=job, company=company, deal=deal, target=target, payload=payload,
+                                     label=label[:500], source_url=source_url, evidence=evidence,
+                                     confidence=confidence)
+
+
+def _fmt_amount(amount, currency):
+    if amount is None:
+        return ""
+    for size, unit in ((1e9, "bn"), (1e6, "M"), (1e3, "k")):
+        if amount >= size:
+            return f"{currency or ''} {amount / size:.3g}{unit}".strip()
+    return f"{currency or ''} {amount:,.0f}".strip()
+
+
+def _company_facts(job, company, deal, facts):
+    for f in facts:
+        current = getattr(company, f.field, None)
+        if _norm(current) == _norm(f.value) or not f.value.strip():
+            continue
+        was = f" (now: {current})" if current else ""
+        _suggest(job, company, deal, Suggestion.Target.COMPANY_FIELD, {"field": f.field, "value": f.value},
+                 f"{FIELD_LABELS[f.field]}: {f.value}{was}", f.source_url, f.evidence, f.confidence)
+
+
+def _people(job, company, deal, people, investor_names=()):
+    existing = {_norm(n) for n in Contact.objects.filter(Q(company=company) | Q(co_investor__name__in=investor_names))
+                .values_list("full_name", flat=True)}
+    by_investor = {_norm(n): n for n in investor_names}
+    for p in people:
+        if _norm(p.full_name) in existing:
+            continue
+        org = by_investor.get(_norm(p.organization))
+        payload = {"full_name": p.full_name, "role": p.role, "email": p.email, "phone": p.phone,
+                   "profile_url": p.profile_url, "co_investor": org}
+        where = p.organization or company.name
+        _suggest(job, company, deal, Suggestion.Target.CONTACT, payload,
+                 f"{p.full_name} – {p.role or 'role unknown'} ({where})", p.source_url, None, p.confidence)
+
+
+def suggestions_from_research(job, company, research):
+    deal = job.deal
+    _company_facts(job, company, deal, research.company_facts)
+    for r in research.past_rounds:
+        leads = ", ".join(i.name for i in r.lead_investors)
+        when = f" ({r.announced_on[:7]})" if r.announced_on else ""
+        label = f"{r.round_name}{when}: {_fmt_amount(r.amount, r.currency) or 'amount not disclosed'}" \
+                + (f", led by {leads}" if leads else "")
+        if r.post_money or r.pre_money:
+            label += f", post-money {_fmt_amount(r.post_money or (r.pre_money or 0) + (r.amount or 0), r.currency)}"
+        _suggest(job, company, deal, Suggestion.Target.PAST_ROUND, r.model_dump(), label, r.source_url,
+                 ", ".join(i.name for i in r.other_investors) or None, r.confidence)
+    _people(job, company, deal, research.people)
+    known_news = {_norm(s) for s in company.interactions.values_list("summary", flat=True)}
+    for n in research.news:
+        if _norm(n.headline) in known_news:
+            continue
+        _suggest(job, company, deal, Suggestion.Target.NEWS, n.model_dump(),
+                 f"{n.date or ''} {n.headline}".strip(), n.source_url, n.summary)
+
+
+def run_research(job):
+    company = job.company
+    known = [f"Contact: {c.full_name} ({c.role or ''})" for c in company.contacts.all()]
+    known += [f"Valuation {v.valuation_date}: {v.get_method_display()}" for v in company.valuations.all()]
+    research, usage, report = claude.research_company(company, known)
+    _record_usage(job, usage)
+    suggestions_from_research(job, company, research)
+    count = job.suggestions.count()
+    job.summary = f"{count} new suggestion{'s' if count != 1 else ''}." + (
+        f" Note: {research.caveats}" if research.caveats else "")
+
+
+# --- Email ---------------------------------------------------------------------------------
+
+def _company_key(name):
+    name = re.sub(LEGAL_SUFFIXES, "", _norm(name))
+    return re.sub(r"[^a-z0-9]+", "", name)
+
+
+def _domain(url_or_email):
+    if not url_or_email:
+        return None
+    text = url_or_email.split("@")[-1] if "@" in url_or_email and "//" not in url_or_email else url_or_email
+    host = urlsplit(text if "//" in text else f"//{text}").hostname or ""
+    return host.removeprefix("www.") or None
+
+
+def match_company(name, website):
+    key, domain = _company_key(name) if name else None, _domain(website)
+    for company in Company.objects.all():
+        if key and _company_key(company.name) == key:
+            return company
+        if domain and _domain(company.website) == domain:
+            return company
+    return None
+
+
+def _save_attachments(company, deal, attachments, infos):
+    by_name = {i.filename: i for i in infos}
+    saved = []
+    for att in attachments:
+        sha = hashlib.sha256(att["data"]).hexdigest()
+        existing = Document.objects.filter(sha256=sha, company=company).first()
+        if existing:
+            saved.append(existing)
+            continue
+        info = by_name.get(att["filename"])
+        doc = Document(company=company, deal=deal, category=info.category if info else "other",
+                       title=(info.title if info else att["filename"])[:300],
+                       document_date=parse_date(info.document_date) if info and info.document_date else None,
+                       notes="Received by email")
+        doc.file = ContentFile(att["data"], name=att["filename"])  # saved, and hashed, by doc.save()
+        doc.save()
+        saved.append(doc)
+    return saved
+
+
+def run_email(job):
+    inbound = job.inbound_email
+    InboundEmail.objects.filter(pk=inbound.pk).update(status=InboundEmail.Status.PROCESSING)
+    with inbound.raw.open("rb") as fh:
+        info = mail.parse_eml(fh.read())
+    extraction, usage, notes = claude.extract_email(info["subject"], info["sender"], info["sent_at"],
+                                                    info["body"], info["attachments"])
+    _record_usage(job, usage)
+    inbound.summary = extraction.summary
+
+    company = inbound.company or match_company(extraction.company_name, extraction.company_website)
+    if company is None and not extraction.company_name:
+        inbound.status = InboundEmail.Status.NEEDS_COMPANY
+        inbound.note = "Claude could not tell which company the email is about. Choose it and analyse again."
+        inbound.save()
+        job.summary = inbound.note
+        return
+    with transaction.atomic():
+        if company is None:
+            company = Company.objects.create(name=extraction.company_name.strip(),
+                                             website=extraction.company_website or None)
+        deal = inbound.deal or company.deals.filter(stage__in=OPEN_STAGES).order_by("-opened_on", "-id").first()
+        if deal is None:
+            source = Contact.objects.filter(email__iexact=info["sender"]).first()
+            deal = Deal.objects.create(company=company, stage=DealStage.SOURCED, source_contact=source,
+                                       source_note=f"Email from {info['sender']}: {info['subject']}"[:500])
+        documents = _save_attachments(company, deal, info["attachments"], extraction.attachments)
+        Interaction.objects.create(company=company, deal=deal, kind="email",
+                                   occurred_on=(info["sent_at"] or timezone.now()).date(),
+                                   summary=f"Email from {info['sender']}: {info['subject']}"[:500],
+                                   details=extraction.summary)
+        job.company, job.deal = company, deal
+
+        _company_facts(job, company, deal, extraction.company_facts)
+        for f in extraction.deal_facts:
+            if _norm(getattr(deal, f.field, None)) == _norm(f.value):
+                continue
+            _suggest(job, company, deal, Suggestion.Target.DEAL_FIELD, {"field": f.field, "value": f.value},
+                     f"{FIELD_LABELS[f.field]}: {f.value}", None, f.evidence, f.confidence)
+        for r in extraction.round_investors:
+            amount = f", {_fmt_amount(r.amount, r.currency or deal.currency)}" if r.amount else ""
+            _suggest(job, company, deal, Suggestion.Target.PARTICIPANT, r.model_dump(),
+                     f"{r.name} ({r.kind}) – {r.role.replace('_', '-')}, {r.status}{amount}", None, r.evidence)
+        _people(job, company, deal, extraction.people, [r.name for r in extraction.round_investors])
+        if extraction.key_terms:
+            _suggest(job, company, deal, Suggestion.Target.DEAL_NOTE,
+                     {"heading": f"Key terms from email '{info['subject']}'", "text": extraction.key_terms},
+                     "Key investment terms: " + extraction.key_terms.replace("\n", "; ")[:300])
+
+        inbound.company, inbound.deal = company, deal
+        inbound.status = InboundEmail.Status.DONE
+        inbound.note = "; ".join([f"{len(documents)} document(s) saved"] + notes)
+        inbound.save()
+    count = job.suggestions.count()
+    job.summary = f"{company.name}: {count} suggestion{'s' if count != 1 else ''}, {len(documents)} document(s)."

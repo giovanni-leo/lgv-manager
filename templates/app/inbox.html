@@ -1,0 +1,58 @@
+{% extends "base.html" %}{% load i18n vc %}
+{% block title %}{% translate "Inbox" %}{% endblock %}
+{% block content %}
+<div class="page-head"><h1>{% translate "Inbox" %}</h1></div>
+{% if active %}<div hx-get="{% url 'inbox' %}" hx-trigger="every 6s" hx-select="main" hx-target="main" hx-swap="outerHTML"></div>{% endif %}
+<div class="grid">
+  <section class="card">
+    <header><h2>{% translate "Send an email" %}</h2></header>
+    {% if not ai_enabled %}<p class="notice">{% translate "Claude is not configured: add ANTHROPIC_API_KEY to the .env file." %}</p>{% endif %}
+    {% if mailbox %}
+    <p>{% translate "Forward emails about a company (with pitch deck, term sheet, reports attached) to" %} <strong>{{ mailbox }}</strong>.</p>
+    <p class="muted small">{% translate "Accepted senders" %}: {{ allowed|join:", "|default:"–" }}</p>
+    {% else %}
+    <p class="muted">{% translate "No intake mailbox is configured yet (MAIL_IMAP_* in .env). You can still upload an email saved as .eml." %}</p>
+    {% endif %}
+    {% if perms.core.add_inboundemail %}
+    <form method="post" enctype="multipart/form-data" class="quick-add">{% csrf_token %}
+      {{ form.eml }}<button class="btn primary" type="submit">{% translate "Upload .eml" %}</button>
+      {{ form.eml.errors }}
+    </form>
+    <p class="muted small">{% translate "Outlook: open the email, File › Save As › .eml (or drag it to the desktop). Gmail: ⋮ › Download message." %}</p>
+    {% endif %}
+  </section>
+  <section class="card">
+    <header><h2>{% translate "What happens" %}</h2></header>
+    <ol class="small">
+      <li>{% translate "Claude reads the email and the PDF or image attachments." %}</li>
+      <li>{% translate "The company is matched (or created) and the open round is used (or created)." %}</li>
+      <li>{% translate "Attachments are saved as documents and the email is logged in the activity." %}</li>
+      <li>{% translate "Round figures, investors, contacts and key terms are proposed on the deal page for you to accept or reject." %}</li>
+    </ol>
+  </section>
+</div>
+<section class="card" style="margin-top:1rem">
+  <div class="table-scroll"><table class="list stack">
+    <thead><tr><th>{% translate "Received" %}</th><th>{% translate "From" %}</th><th>{% translate "Subject" %}</th><th>{% translate "Status" %}</th><th>{% translate "Result" %}</th></tr></thead>
+    <tbody>
+    {% for e in emails %}
+      <tr>
+        <td>{{ e.received_at|date:"j M Y H:i" }}</td>
+        <td>{{ e.sender }}</td>
+        <td><strong>{{ e.subject|default:"–" }}</strong>{% if e.summary %}<br><small class="muted">{{ e.summary|truncatechars:200 }}</small>{% endif %}</td>
+        <td><span class="badge em-{{ e.status }}">{{ e.get_status_display }}</span></td>
+        <td>
+          {% if e.deal %}<a href="{% url 'deal_detail' e.deal.pk %}">{{ e.company.name }} – {{ e.deal.round_name|default:_("deal") }}</a>
+          {% elif e.company %}<a href="{% url 'company_detail' e.company.pk %}">{{ e.company.name }}</a>{% endif %}
+          {% if e.note %}<br><small class="muted">{{ e.note|truncatechars:240 }}</small>{% endif %}
+          {% if perms.core.change_inboundemail and e.status in "needs_company failed" %}
+          <form method="post" action="{% url 'inbox_reprocess' e.pk %}" class="quick-add">{% csrf_token %}
+            {{ assign_form.company }}<button class="btn small" type="submit">{% translate "Analyse again" %}</button></form>
+          {% endif %}
+        </td>
+      </tr>
+    {% empty %}<tr><td colspan="5" class="muted">{% translate "No emails yet." %}</td></tr>{% endfor %}
+    </tbody>
+  </table></div>
+</section>
+{% endblock %}

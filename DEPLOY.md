@@ -154,6 +154,31 @@ Puoi rilanciarlo senza rischi: un `.env` già esistente resta com'è, e i dati n
 Per aggiornare l'app: carica il nuovo zip con SFTP, poi
 `unzip -o lgv-manager.zip && cd lgv-manager && sh docker/install.sh vc.tuodominio.ch`.
 
+## Claude: ricerca web e lettura delle email
+
+Le due funzioni usano l'API di Anthropic e un contenitore separato, il `worker`, che parte da solo
+con `docker compose up`.
+
+1. **Chiave API.** Crea un account su **console.anthropic.com**, aggiungi un metodo di pagamento e un
+   limite di spesa mensile (*Settings → Limits*), poi crea una chiave (*API keys*). Mettila nel `.env`:
+   `ANTHROPIC_API_KEY=sk-ant-...`, e riavvia con `docker compose up -d`.
+   Costo indicativo: una ricerca web va da qualche decina di centesimi a qualche franco, a seconda di
+   quante pagine Claude consulta; la lettura di un'email con un pitch deck in genere meno. Il costo approssimativo di ogni lavoro è visibile in *Data → Claude jobs*.
+2. **Casella email (facoltativa).** Crea una casella dedicata, per esempio `deals@tuodominio.ch`,
+   presso un fornitore che offre IMAP con password (Infomaniak sì; Microsoft 365 richiede OAuth e va
+   configurato a parte). Nel `.env`:
+   ```ini
+   MAIL_IMAP_HOST=mail.infomaniak.com
+   MAIL_IMAP_USER=deals@tuodominio.ch
+   MAIL_IMAP_PASSWORD=...
+   MAIL_ALLOWED_SENDERS=@lakegrowth.ch,collega@altrodominio.ch
+   ```
+   Solo i mittenti elencati vengono analizzati; gli altri restano nell'Inbox come "Sender not allowed".
+   Senza casella si possono comunque caricare file `.eml` dalla pagina *Inbox*.
+3. **Riservatezza.** Testo delle email e allegati PDF vengono inviati all'API di Anthropic per
+   l'analisi. Verifica che sia compatibile con gli accordi di riservatezza e con la nLPD; con
+   `AI_READ_ATTACHMENTS=0` Claude legge solo il testo dell'email e gli allegati restano sul server.
+
 ## 7. Aggiornare l'applicazione
 
 ```sh

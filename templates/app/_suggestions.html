@@ -1,0 +1,54 @@
+{% load i18n vc %}{% url 'suggestions_card' company.pk as card_url %}
+<section class="card wide suggestions" id="suggestions-card"
+  {% if latest_job.is_active %}hx-get="{{ card_url }}{% if deal %}?deal={{ deal.pk }}{% endif %}" hx-trigger="every 4s" hx-swap="outerHTML"{% endif %}>
+  <header>
+    <h2>{% translate "Suggestions from Claude" %}{% if pending %} <span class="count">{{ pending|length }}</span>{% endif %}</h2>
+    {% if ai_enabled and perms.core.change_company and not latest_job.is_active %}
+    <button class="btn small" hx-post="{% url 'research_start' company.pk %}{% if deal %}?deal={{ deal.pk }}{% endif %}"
+            hx-target="#suggestions-card" hx-swap="outerHTML">🔎 {% translate "Search the web" %}</button>
+    {% endif %}
+  </header>
+
+  {% if latest_job.is_active %}
+  <p class="working"><span class="spinner"></span>
+    {% if latest_job.kind == "email" %}{% translate "Claude is reading the email and its attachments…" %}
+    {% else %}{% translate "Claude is searching the web for rounds, investors, people and news. This usually takes one to three minutes; you can leave the page." %}{% endif %}</p>
+  {% elif latest_job.status == "failed" %}
+  <p class="notice">{% translate "The last search did not complete" %}: {{ latest_job.error|truncatechars:300 }}</p>
+  {% elif latest_job and latest_job.summary and not pending %}
+  <p class="muted">{{ latest_job.summary }}{% if latest_job.finished_at %} · {{ latest_job.finished_at|date:"j M Y H:i" }}{% endif %}</p>
+  {% endif %}
+
+  {% if suggestion_error %}<p class="notice">{{ suggestion_error }}</p>{% endif %}
+
+  {% if pending %}
+  <ul class="suggestion-list">
+    {% for s in pending %}
+    <li id="suggestion-{{ s.pk }}">
+      <div class="what">
+        <span class="badge sg-{{ s.target }}">{{ s.get_target_display }}</span>
+        <strong>{{ s.label }}</strong>
+        {% if s.confidence and s.confidence != "high" %}<span class="badge warn">{{ s.confidence }} {% translate "confidence" %}</span>{% endif %}
+        {% if s.evidence %}<small class="muted">{{ s.evidence|truncatechars:240 }}</small>{% endif %}
+        {% if s.source_url %}<small><a href="{{ s.source_url }}" target="_blank" rel="noopener noreferrer">{{ s.source_url|truncatechars:70 }} ↗</a></small>
+        {% elif s.job.kind == "email" %}<small class="muted">{% translate "From an email" %}</small>{% endif %}
+      </div>
+      {% if perms.core.change_company %}
+      <div class="decide">
+        <button class="btn small primary" hx-post="{% url 'suggestion_decide' s.pk 'accept' %}{% if deal %}?deal={{ deal.pk }}{% endif %}" hx-target="#suggestions-card" hx-swap="outerHTML">{% translate "Accept" %}</button>
+        <button class="btn small" hx-post="{% url 'suggestion_decide' s.pk 'reject' %}{% if deal %}?deal={{ deal.pk }}{% endif %}" hx-target="#suggestions-card" hx-swap="outerHTML">{% translate "Reject" %}</button>
+      </div>
+      {% endif %}
+    </li>
+    {% endfor %}
+  </ul>
+  {% if perms.core.change_company and pending|length > 1 %}
+  <p class="bulk">
+    <button class="btn small subtle" hx-post="{% url 'suggestions_decide_all' company.pk 'accept' %}{% if deal %}?deal={{ deal.pk }}{% endif %}" hx-target="#suggestions-card" hx-swap="outerHTML" hx-confirm="{% translate 'Accept all the suggestions?' %}">{% translate "Accept all" %}</button>
+    <button class="btn small subtle" hx-post="{% url 'suggestions_decide_all' company.pk 'reject' %}{% if deal %}?deal={{ deal.pk }}{% endif %}" hx-target="#suggestions-card" hx-swap="outerHTML" hx-confirm="{% translate 'Reject all the suggestions?' %}">{% translate "Reject all" %}</button>
+  </p>
+  {% endif %}
+  {% elif not latest_job.is_active %}
+  <p class="muted small">{% if ai_enabled %}{% translate "Search the web to collect past rounds, investors, management and news about this company. Every finding comes with its source and is only saved if you accept it." %}{% else %}{% translate "Claude is not configured: add ANTHROPIC_API_KEY to the .env file to enable web search and email analysis." %}{% endif %}</p>
+  {% endif %}
+</section>

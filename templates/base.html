@@ -20,12 +20,15 @@
       <a href="{{ home_url }}" {% if request.path == home_url %}aria-current="page"{% endif %}>{% translate "Home" %}</a>
       {% if perms.core.view_deal %}<a href="{{ pipeline_url }}" {% if request.path == pipeline_url or "/deals/" in request.path %}aria-current="page"{% endif %}>{% translate "Pipeline" %}</a>{% endif %}
       {% if perms.core.view_company %}<a href="{{ portfolio_url }}" {% if request.path == portfolio_url or "/companies/" in request.path %}aria-current="page"{% endif %}>{% translate "Portfolio" %}</a>{% endif %}
+      {% if perms.core.view_inboundemail %}{% url 'inbox' as inbox_url %}<a href="{{ inbox_url }}" {% if request.path == inbox_url %}aria-current="page"{% endif %}>{% translate "Inbox" %}</a>{% endif %}
       <a href="{% url 'admin:index' %}">{% translate "Data" %}</a>
       <a href="{% url 'two_factor:profile' %}">{% translate "Security" %}</a>
       <form method="post" action="{% url 'logout' %}">{% csrf_token %}<button type="submit">{% translate "Log out" %}</button></form>
     </nav>
     {% endif %}
   </header>
-  {% block content_wrapper %}<main>{% block content %}{% endblock %}</main>{% endblock %}
+  {% block content_wrapper %}<main>
+    {% if messages %}<ul class="messages">{% for m in messages %}<li class="{{ m.tags }}">{{ m }}</li>{% endfor %}</ul>{% endif %}
+    {% block content %}{% endblock %}</main>{% endblock %}
 </body>
 </html>

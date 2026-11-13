@@ -148,3 +148,28 @@ ol.timeline time { color: var(--muted); font-size: .85rem; margin-right: .4rem; 
   table.stack td:first-child { flex-basis: 100%; }
   table.stack td.row-actions { margin-left: auto; }
 }
+
+/* Suggestions from Claude */
+.suggestions { border-color: #cfc3f0; }
+.suggestion-list { list-style: none; margin: 0; padding: 0; }
+.suggestion-list li { display: flex; gap: .75rem; justify-content: space-between; align-items: flex-start; padding: .6rem 0; border-bottom: 1px solid var(--line); }
+.suggestion-list .what { display: flex; flex-direction: column; gap: .15rem; min-width: 0; }
+.suggestion-list .what strong { font-weight: 600; overflow-wrap: anywhere; }
+.suggestion-list .what a { overflow-wrap: anywhere; }
+.suggestion-list .decide { display: flex; gap: .3rem; flex-shrink: 0; }
+.bulk { margin: .6rem 0 0; display: flex; gap: .5rem; }
+.badge.sg-past_round, .badge.sg-participant { background: var(--accent-soft); color: var(--accent); }
+.badge.sg-contact { background: #e8f0fe; color: #1a56c4; }
+.badge.sg-news { background: #eef0f3; }
+.badge.sg-deal_field, .badge.sg-deal_note { background: #efe9fb; color: #5b2bb5; }
+.badge.em-done { background: var(--accent-soft); color: var(--ok); }
+.badge.em-failed, .badge.em-rejected { background: var(--bad-soft); color: var(--bad); }
+.badge.em-needs_company { background: var(--warn-soft); color: var(--warn); }
+.working { display: flex; gap: .6rem; align-items: center; color: var(--muted); }
+.spinner { width: 1rem; height: 1rem; border: 2px solid var(--line); border-top-color: var(--accent); border-radius: 50%; animation: spin 1s linear infinite; flex-shrink: 0; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.messages { list-style: none; padding: 0; margin: 0 0 1rem; }
+.messages li { background: var(--accent-soft); border-left: 4px solid var(--accent); padding: .5rem .8rem; border-radius: 6px; }
+.field.checkbox { flex-direction: row; align-items: center; gap: .5rem; color: var(--fg); }
+@media (max-width: 640px) { .suggestion-list li { flex-direction: column; } }
+.suggestion-list .what > .badge { align-self: flex-start; }

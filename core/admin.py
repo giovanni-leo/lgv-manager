@@ -14,7 +14,7 @@ from django.utils.http import url_has_allowed_host_and_scheme
 from django.utils.html import format_html, format_html_join
 from django.utils.translation import gettext_lazy as _
 
-from .models import (CoInvestor, Company, CompanyMetric, Contact, RoundParticipant, ConvertibleTerms, Deal, DealStageHistory,
+from .models import (AiJob, CoInvestor, InboundEmail, Suggestion, Company, CompanyMetric, Contact, RoundParticipant, ConvertibleTerms, Deal, DealStageHistory,
                      Document, DocumentLink, FxRate, InvestingEntity, Investment, Interaction,
                      Milestone, OptionPool, Realization, ShareClass, ShareEvent, Valuation)
 from . import admin_users  # noqa: F401  (registers the simplified user admin)
@@ -406,3 +406,39 @@ class ConvertibleTermsAdmin(ModelAdmin):
     search_fields = ["investment__company__name"]
     autocomplete_fields = ["investment"]
     essential = ["investment", "valuation_cap", "discount_pct", "interest_rate", "maturity_date"]
+
+
+@admin.register(InboundEmail)
+class InboundEmailAdmin(ModelAdmin):
+    list_display = ["received_at", "sender", "subject", "status", "company"]
+    list_filter = ["status"]
+    search_fields = ["sender", "subject", "summary"]
+    autocomplete_fields = ["company", "deal"]
+    essential = ["sender", "subject", "status", "company", "deal", "summary", "note"]
+
+
+@admin.register(AiJob)
+class AiJobAdmin(ModelAdmin):
+    list_display = ["created_at", "kind", "status", "company", "input_tokens", "output_tokens", "web_searches",
+                    "approx_cost"]
+    list_filter = ["kind", "status"]
+    readonly_fields = ["kind", "status", "company", "deal", "inbound_email", "requested_by", "created_at",
+                       "started_at", "finished_at", "error", "summary", "input_tokens", "output_tokens",
+                       "web_searches"]
+    essential = ["kind", "status", "company", "summary", "error"]
+
+    @admin.display(description=_("approx. cost (USD)"))
+    def approx_cost(self, obj):
+        return f"{obj.cost_usd:.2f}"
+
+    def has_add_permission(self, request):
+        return False
+
+
+@admin.register(Suggestion)
+class SuggestionAdmin(ModelAdmin):
+    list_display = ["created_at", "company", "target", "label", "status", "decided_by"]
+    list_filter = ["status", "target"]
+    search_fields = ["label", "company__name"]
+    autocomplete_fields = ["company", "deal"]
+    essential = ["company", "deal", "target", "label", "status", "source_url", "evidence"]

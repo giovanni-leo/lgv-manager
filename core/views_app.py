@@ -3,6 +3,7 @@
 from datetime import timedelta
 
 from django import forms
+from django.conf import settings
 from django.contrib.auth.decorators import permission_required
 from django.core.exceptions import PermissionDenied
 from django.db import transaction
@@ -63,6 +64,7 @@ class NewDealForm(forms.Form):
     currency = forms.ChoiceField(choices=Deal._meta.get_field("currency").choices, initial="CHF")
     deadline = forms.DateField(required=False, widget=forms.DateInput(attrs={"type": "date"}))
     source_contact = forms.ModelChoiceField(queryset=Contact.objects.all(), required=False)
+    research = forms.BooleanField(required=False, initial=True)
 
     def clean(self):
         data = super().clean()
@@ -92,8 +94,10 @@ def _deal_contacts(deal, participants):
 
 
 def deal_context(request, deal):
+    from .views_ai import suggestions_context
+
     ds = deal_summary(deal)
-    return {
+    return {**suggestions_context(deal.company, deal),
         "deal": deal, "company": deal.company, "ds": ds,
         "stages": DealStage.choices,
         "contacts": _deal_contacts(deal, ds.participants),
@@ -109,7 +113,9 @@ def deal_context(request, deal):
 
 
 def company_context(request, company):
-    return {
+    from .views_ai import suggestions_context
+
+    return {**suggestions_context(company),
         "company": company,
         "s": company_summary(company),
         "open_deals": company.deals.filter(stage__in=OPEN_STAGES + ["on_hold"]),
@@ -168,8 +174,12 @@ def deal_new(request):
                 company=company, round_name=data["round_name"] or None, round_size=data["round_size"],
                 pre_money=data["pre_money"], proposed_ticket=data["proposed_ticket"], currency=data["currency"],
                 deadline=data["deadline"], source_contact=data["source_contact"])
+        if data["research"] and settings.AI_ENABLED:
+            from .ai.jobs import queue_research
+
+            queue_research(company, deal, request.user)
         return redirect("deal_detail", pk=deal.pk)
-    return render(request, "app/deal/new.html", {"form": form})
+    return render(request, "app/deal/new.html", {"form": form, "ai_enabled": settings.AI_ENABLED})
 
 
 @require_POST

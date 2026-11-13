@@ -8,7 +8,7 @@ from two_factor.admin import AdminSiteOTPRequiredMixin
 MODEL_ORDER = [
     "Company", "Deal", "Investment", "Realization", "Valuation", "CompanyMetric", "Milestone",
     "Interaction", "Document", "Contact", "CoInvestor", "RoundParticipant", "ShareClass", "ShareEvent", "OptionPool",
-    "ConvertibleTerms", "InvestingEntity", "FxRate",
+    "ConvertibleTerms", "InvestingEntity", "FxRate", "InboundEmail", "Suggestion", "AiJob",
 ]
 APP_ORDER = ["core", "auth", "auditlog", "otp_totp", "otp_static"]
 

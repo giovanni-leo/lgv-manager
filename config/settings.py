@@ -145,6 +145,32 @@ USE_TZ = True
 BASE_CURRENCY = "CHF"
 CURRENCIES = ["CHF", "EUR", "USD"]
 
+# --- Claude (automatic data gathering) ------------------------------------------
+# The API key is read by the Anthropic SDK from ANTHROPIC_API_KEY. Without it the
+# "Search the web" button and email analysis are hidden / skipped.
+AI_ENABLED = bool(env("ANTHROPIC_API_KEY")) and env_bool("AI_ENABLED", True)
+AI_MODEL = env("AI_MODEL", "claude-opus-5-5")
+AI_RESEARCH_EFFORT = env("AI_RESEARCH_EFFORT", "high")
+AI_EXTRACTION_EFFORT = env("AI_EXTRACTION_EFFORT", "medium")
+AI_MAX_WEB_SEARCHES = int(env("AI_MAX_WEB_SEARCHES", "12"))
+# Send email attachments (decks, term sheets) to Claude for reading.
+AI_READ_ATTACHMENTS = env_bool("AI_READ_ATTACHMENTS", True)
+# Model prices in USD per million tokens, only used to show an approximate cost per job.
+AI_PRICE_INPUT_PER_MTOK = float(env("AI_PRICE_INPUT_PER_MTOK", "4"))
+AI_PRICE_OUTPUT_PER_MTOK = float(env("AI_PRICE_OUTPUT_PER_MTOK", "20"))
+
+# --- Email intake ------------------------------------------------------------------
+# A dedicated mailbox read over IMAP by the worker. Only senders listed in
+# MAIL_ALLOWED_SENDERS (addresses or @domains) are processed.
+MAIL_IMAP_HOST = env("MAIL_IMAP_HOST", "")
+MAIL_IMAP_PORT = int(env("MAIL_IMAP_PORT", "993"))
+MAIL_IMAP_USER = env("MAIL_IMAP_USER", "")
+MAIL_IMAP_PASSWORD = env("MAIL_IMAP_PASSWORD", "")
+MAIL_IMAP_FOLDER = env("MAIL_IMAP_FOLDER", "INBOX")
+MAIL_ALLOWED_SENDERS = [s.lower() for s in env_list("MAIL_ALLOWED_SENDERS", "")]
+MAIL_POLL_SECONDS = int(env("MAIL_POLL_SECONDS", "120"))
+MAIL_MAX_ATTACHMENT_MB = int(env("MAIL_MAX_ATTACHMENT_MB", "25"))
+
 # --- Static and uploaded files -----------------------------------------------
 STATIC_URL = "static/"
 STATIC_ROOT = Path(env("DJANGO_STATIC_ROOT", BASE_DIR / "staticfiles"))

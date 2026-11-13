@@ -15,6 +15,7 @@
   <label class="field"><span>{% translate "Currency" %}</span>{{ form.currency }}</label>
   <label class="field"><span>{% translate "Round deadline" %}</span>{{ form.deadline }}</label>
   <label class="field"><span>{% translate "Source contact" %}</span>{{ form.source_contact }}</label>
+  {% if ai_enabled %}<label class="field span-all checkbox">{{ form.research }} <span>{% translate "Let Claude search the web for this company (past rounds, investors, people, news) and propose what it finds" %}</span></label>{% endif %}
   <div class="actions span-all"><button class="btn primary" type="submit">{% translate "Create" %}</button>
     <a class="btn" href="{% url 'pipeline' %}">{% translate "Cancel" %}</a></div>
 </form>

@@ -20,6 +20,9 @@ Schermate di lavoro (dati chiave in alto, modificabili sul posto):
 - **Portfolio**: quota, investito, valore, multiplo, IRR, runway, ultimo report, prossima assemblea.
 - **Società**: posizione e valore, governance e reporting, cap table, investimenti, eventi, report.
 - **Data**: l'interfaccia completa con tutti i campi, per i casi meno frequenti.
+- **Claude** (con `ANTHROPIC_API_KEY`): pulsante *Search the web* su società e opportunità, e lettura delle
+  email (casella IMAP o upload `.eml` in *Inbox*). Tutto arriva come proposte da accettare o scartare.
+  Il contenitore `worker` esegue questi lavori in background.
 
 Messa in produzione: vedi **[DEPLOY.md](DEPLOY.md)**.
 
