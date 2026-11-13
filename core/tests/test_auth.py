@@ -210,3 +210,77 @@ class SingleFundTests(TestCase):
 
         with override_settings(SITE_NAME="Lake Growth Ventures"):
             self.assertContains(self.client.get("/"), "<title>Lake Growth Ventures</title>")
+
+
+def _totp_now(b32_secret):
+    import base64
+    import hashlib
+    import hmac
+    import struct
+    import time
+
+    key = base64.b32decode(b32_secret)
+    digest = hmac.new(key, struct.pack(">Q", int(time.time()) // 30), hashlib.sha1).digest()
+    offset = digest[-1] & 15
+    return str((struct.unpack(">I", digest[offset:offset + 4])[0] & 0x7FFFFFFF) % 1_000_000).zfill(6)
+
+
+class TwoFactorSetupFlowTests(TestCase):
+    """The first-time 2FA setup must survive the browser's own background requests."""
+
+    def setUp(self):
+        import re
+
+        self.re = re
+        User.objects.create_superuser("giovanni", "g@example.com", "a-long-test-password")
+        self.client.post("/account/login/", {"auth-username": "giovanni", "auth-password": "a-long-test-password",
+                                             "login_view-current_step": "auth"})
+
+    def start_setup(self):
+        self.assertEqual(self.client.get("/account/two_factor/setup/").status_code, 200)
+        page = self.client.post("/account/two_factor/setup/", {"setup_view-current_step": "welcome"})
+        return self.re.search(r"TOTP Secret:.*?>([A-Z2-7]+)<", page.content.decode(), self.re.S).group(1), page
+
+    def finish_setup(self, secret):
+        return self.client.post("/account/two_factor/setup/", {
+            "setup_view-current_step": "generator", "generator-token": _totp_now(secret)})
+
+    def test_setup_completes(self):
+        secret, _page = self.start_setup()
+        response = self.finish_setup(secret)
+        self.assertRedirects(response, "/account/two_factor/setup/complete/", fetch_redirect_response=False)
+        self.assertTrue(TOTPDevice.objects.filter(user__username="giovanni", confirmed=True).exists())
+        self.assertEqual(self.client.get("/").status_code, 200)
+
+    def test_background_requests_do_not_restart_the_wizard(self):
+        secret, _page = self.start_setup()
+        # What browsers do on their own while the QR code is on screen.
+        favicon = self.client.get("/favicon.ico")
+        self.assertEqual(favicon.status_code, 301)
+        self.assertTrue(favicon["Location"].startswith("/static/"))
+        self.assertEqual(self.client.get("/apple-touch-icon.png", HTTP_SEC_FETCH_DEST="image").status_code, 403)
+        self.assertEqual(self.client.get("/admin/", HTTP_SEC_FETCH_DEST="script").status_code, 403)
+        response = self.finish_setup(secret)
+        self.assertRedirects(response, "/account/two_factor/setup/complete/", fetch_redirect_response=False)
+
+    def test_authenticator_shows_the_fund_name(self):
+        from django.test import override_settings
+
+        with override_settings(SITE_NAME="Lake Growth Ventures"):
+            _secret, page = self.start_setup()
+            self.assertContains(page, "issuer=Lake+Growth+Ventures")
+            self.assertNotContains(page, "issuer=testserver")
+            qr = self.client.get("/account/two_factor/qrcode/")
+            self.assertEqual(qr.status_code, 200)
+            self.assertEqual(qr["Content-Type"].split(";")[0], "image/svg+xml")
+
+
+class BackgroundRequestTests(TestCase):
+    def test_page_navigation_is_redirected_to_login(self):
+        response = self.client.get("/admin/", HTTP_SEC_FETCH_DEST="document")
+        self.assertEqual(response.status_code, 302)
+
+    def test_htmx_request_gets_client_side_redirect(self):
+        response = self.client.get("/", HTTP_HX_REQUEST="true")
+        self.assertEqual(response.status_code, 204)
+        self.assertTrue(response["HX-Redirect"].startswith("/account/login/"))
