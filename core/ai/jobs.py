@@ -6,6 +6,7 @@ import re
 from datetime import timedelta
 from urllib.parse import urlsplit
 
+from django.conf import settings
 from django.core.files.base import ContentFile
 from django.db import transaction
 from django.db.models import Q
@@ -279,3 +280,11 @@ def run_email(job):
         inbound.save()
     count = job.suggestions.count()
     job.summary = f"{company.name}: {count} suggestion{'s' if count != 1 else ''}, {len(documents)} document(s)."
+    if settings.AI_RESEARCH_AFTER_EMAIL and _needs_research(company):
+        queue_research(company, deal, job.requested_by)
+        job.summary += " Web research started."
+
+
+def _needs_research(company):
+    """A company we know little about: no description and no funding history yet."""
+    return not company.description and not company.funding_rounds.exists()

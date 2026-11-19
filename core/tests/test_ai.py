@@ -271,6 +271,7 @@ class ResearchJobTests(TestCase):
 # --- Email intake -------------------------------------------------------------------------
 
 @AI_ON
+@override_settings(AI_RESEARCH_AFTER_EMAIL=False)  # covered by EmailThenResearchTests
 class EmailTests(TestCase):
     def setUp(self):
         self.company = Company.objects.create(name="CardioSense SA", status="portfolio")
@@ -597,3 +598,28 @@ class FundingHistoryTests(TestCase):
                                           occurred_on=date(2026, 3, 1))
         importlib.import_module("core.migrations.0008_remove_round_news_duplicates").forwards(apps, None)
         self.assertEqual(list(Interaction.objects.all()), [keep])
+
+
+@AI_ON
+class EmailThenResearchTests(TestCase):
+    def process(self, result):
+        mail.ingest_raw(make_eml())
+        with mock.patch.object(claude, "extract_email", return_value=(result, claude.Usage(), [])):
+            jobs.run_job(jobs.claim_next_job())
+
+    def test_new_company_from_email_is_researched_on_the_web(self):
+        self.process(email_result("OrthoFlex SA"))
+        research = AiJob.objects.get(kind="web_research")
+        self.assertEqual(research.company.name, "OrthoFlex SA")
+        self.assertEqual(research.status, "queued")
+        self.assertIn("Web research started", AiJob.objects.get(kind="email").summary)
+
+    def test_well_known_company_is_not_researched_again(self):
+        Company.objects.create(name="CardioSense SA", description="Known already.")
+        self.process(email_result("CardioSense"))
+        self.assertFalse(AiJob.objects.filter(kind="web_research").exists())
+
+    @override_settings(AI_RESEARCH_AFTER_EMAIL=False)
+    def test_can_be_turned_off(self):
+        self.process(email_result("OrthoFlex SA"))
+        self.assertFalse(AiJob.objects.filter(kind="web_research").exists())
