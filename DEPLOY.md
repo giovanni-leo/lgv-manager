@@ -192,16 +192,67 @@ git pull
 docker compose up -d --build          # le migrazioni del database partono da sole
 ```
 
-## 8. Backup (da completare nella fase 5)
+## 8. Backup
 
-I backup notturni cifrati verso un'altra sede arrivano con la fase 5. Fino ad allora:
+Ogni notte (alle 02:30, ora svizzera) il container `backup` salva database, documenti e `.env`,
+li **cifra sul server** e li copia su Google Drive, nella cartella `LGV-Backups`. Se qualcosa va
+storto parte un'email a `BACKUP_ALERT_EMAIL`, usando la casella Gmail dell'app.
 
-- attiva gli **snapshot automatici** del server dal pannello del fornitore;
-- prima di caricare dati importanti, esegui ogni tanto un dump manuale:
+- **Cifratura:** con [age](https://age-encryption.org). Il server conserva solo la chiave
+  *pubblica*, che serve a cifrare. La chiave *segreta* (`AGE-SECRET-KEY-…`), l'unica che può
+  leggere i backup, viene mostrata una sola volta durante l'installazione e va custodita in un
+  password manager. Se la si perde, i backup non sono più leggibili.
+- **Conservazione:** gli ultimi 7 giorni, poi una copia a settimana per 4 settimane e una al mese
+  per 6 mesi. Ogni documento viene caricato una volta sola e conservato.
+- **Accesso a Google Drive:** rclone, con il solo permesso sui file che crea lui (`drive.file`).
+  Non vede il resto del Drive né la posta.
+
+### Installazione (una volta)
+
+Dal PC, apri la sessione SSH con un tunnel, che serve per la pagina di accesso Google:
 
 ```sh
-docker compose exec -T db pg_dump -U vc -Fc vc > vc-$(date +%F).dump
+ssh -L 53682:127.0.0.1:53682 umbrel@192.168.1.174
+cd ~/lgv-manager && sh docker/backup-setup.sh
 ```
+
+Lo script:
+1. costruisce il container;
+2. crea la coppia di chiavi e ti mostra la chiave segreta, da salvare (scrivi `SAVED` per
+   continuare);
+3. mostra un link `http://127.0.0.1:53682/auth…`: aprilo nel browser del PC, accedi con l'account
+   Google dei backup e clicca *Consenti*;
+4. chiede l'indirizzo a cui mandare gli avvisi;
+5. controlla tutto, manda un'email di prova e fa subito il primo backup.
+
+### Comandi utili (sul server, in `~/lgv-manager`)
+
+```sh
+sudo docker compose exec backup lgv-backup check     # stato, Google Drive, email di prova
+sudo docker compose exec backup lgv-backup list      # backup disponibili
+sudo docker compose exec backup lgv-backup run       # un backup adesso
+sudo docker compose logs --tail 50 backup            # cosa è successo
+```
+
+### Ripristino
+
+```sh
+sudo docker compose stop app worker
+sudo docker compose exec backup lgv-backup restore            # l'ultimo; oppure: restore 2026-11-19
+sudo docker compose start app worker
+```
+
+Chiede di scrivere `RESTORE` e di incollare la chiave segreta, che non viene salvata. Il database
+viene **sostituito** con quello del backup e i documenti mancanti vengono riscritti. Il `.env` di
+quel giorno finisce in `data/backup/` per confrontarlo con quello attuale.
+
+Su un server nuovo: installa l'app (sezione 5), metti nel `.env` la riga `BACKUP_AGE_RECIPIENT=`
+con la chiave pubblica di sempre (si ricava dalla chiave segreta: `echo AGE-SECRET-KEY-… | age-keygen -y`),
+lancia `sh docker/backup-setup.sh` e poi il ripristino. Finché il database è vuoto il backup non
+parte, così non può sostituire quelli buoni.
+
+Una volta ogni tanto conviene provare il ripristino su un computer di prova, per essere sicuri che
+la chiave salvata sia quella giusta.
 
 ## 9. Variante Microsoft Azure
 

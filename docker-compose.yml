@@ -57,6 +57,27 @@ services:
       app:
         condition: service_started
 
+  # Nightly encrypted backup to Google Drive (or another rclone remote). Off until
+  # docker/backup-setup.sh has run and added COMPOSE_PROFILES=backup to .env.
+  backup:
+    profiles: ["backup"]
+    build:
+      context: .
+      dockerfile: docker/backup/Dockerfile
+    image: lgv-backup:latest
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      POSTGRES_HOST: db
+      POSTGRES_PORT: "5432"
+    volumes:
+      - media:/data/media
+      - ./data/backup:/config
+      - ./.env:/backup/.env:ro
+    depends_on:
+      db:
+        condition: service_healthy
+
   proxy:
     image: caddy:2-alpine
     restart: unless-stopped

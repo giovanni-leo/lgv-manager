@@ -11,6 +11,9 @@ services:
   worker:
     volumes:
       - ./data/media:/data/media
+  backup:
+    volumes:
+      - ./data/media:/data/media
   proxy:
     volumes:
       - ./data/caddy:/data
