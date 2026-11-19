@@ -91,7 +91,17 @@ $DC up -d backup
 
 echo
 echo "== 5/5 Check and first backup"
-sleep 3
+i=0
+until [ "$($DC ps backup --format '{{.State}}' 2>/dev/null)" = "running" ] && sleep 3 \
+      && [ "$($DC ps backup --format '{{.State}}' 2>/dev/null)" = "running" ]; do
+  i=$((i + 1))
+  if [ "$i" -ge 10 ]; then
+    echo "The backup container does not start. Its log:"
+    $DC logs --tail 30 backup
+    exit 1
+  fi
+  sleep 3
+done
 $DC exec backup lgv-backup check || echo "(fix what is marked above, then run: sudo docker compose exec backup lgv-backup check)"
 $DC exec backup lgv-backup run
 echo

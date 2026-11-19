@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 """Encrypted off-site backups of LGV Manager: database, documents and .env.
 
 Runs in the `backup` container (see docker-compose.yml).
