@@ -144,7 +144,12 @@ def _people(job, company, deal, people, investor_names=()):
 def suggestions_from_research(job, company, research):
     deal = job.deal
     _company_facts(job, company, deal, research.company_facts)
+    recorded = {(_norm(name), d.year if d else None)
+                for name, d in company.funding_rounds.values_list("round_name", "announced_on")}
     for r in research.past_rounds:
+        year = int(r.announced_on[:4]) if r.announced_on and r.announced_on[:4].isdigit() else None
+        if (_norm(r.round_name), year) in recorded:
+            continue
         leads = ", ".join(i.name for i in r.lead_investors)
         when = f" ({r.announced_on[:7]})" if r.announced_on else ""
         label = f"{r.round_name}{when}: {_fmt_amount(r.amount, r.currency) or 'amount not disclosed'}" \

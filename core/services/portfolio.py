@@ -278,3 +278,31 @@ def report_documents(company, limit=10):
     return company.documents.filter(category__in=REPORT_DOCUMENT_CATEGORIES).order_by(
         "-document_date", "-uploaded_at")[:limit]
 
+
+
+# --- Known investors -----------------------------------------------------------------
+
+@dataclass
+class KnownInvestor:
+    investor: object
+    rounds: list = field(default_factory=list)        # [(FundingRound, is_lead)]
+    participations: list = field(default_factory=list)  # RoundParticipant of the company's deals
+
+    @property
+    def was_lead(self):
+        return any(lead for _r, lead in self.rounds)
+
+
+def known_investors(company):
+    """Investors known in a company: from its funding history and from its deals."""
+    from core.models import FundingRoundInvestor
+
+    by_id = {}
+    for fri in (FundingRoundInvestor.objects.filter(funding_round__company=company)
+                .select_related("co_investor", "funding_round")
+                .order_by("funding_round__announced_on", "funding_round__id")):
+        entry = by_id.setdefault(fri.co_investor_id, KnownInvestor(fri.co_investor))
+        entry.rounds.append((fri.funding_round, fri.is_lead))
+    for p in RoundParticipant.objects.filter(deal__company=company).select_related("co_investor", "deal"):
+        by_id.setdefault(p.co_investor_id, KnownInvestor(p.co_investor)).participations.append(p)
+    return sorted(by_id.values(), key=lambda k: (not k.was_lead, -len(k.rounds), k.investor.name.lower()))

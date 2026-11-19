@@ -1,0 +1,20 @@
+{% load i18n vc %}<section class="card wide">
+  <header><h2>{% translate "Investors" %}{% if investors %} <span class="count">{{ investors|length }}</span>{% endif %}</h2></header>
+  {% if investors %}
+  <div class="table-scroll"><table class="list stack">
+    <thead><tr><th>{% translate "Investor" %}</th><th>{% translate "Type" %}</th><th>{% translate "Rounds" %}</th><th>{% translate "Current rounds" %}</th></tr></thead>
+    <tbody>
+    {% for k in investors %}
+      <tr>
+        <td><strong>{{ k.investor.name }}</strong>{% if k.was_lead %} <span class="badge st-signed">{% translate "lead" %}</span>{% endif %}</td>
+        <td><span class="badge kind-{{ k.investor.kind }}">{{ k.investor.get_kind_display }}</span></td>
+        <td>{% for r, lead in k.rounds %}{{ r.round_name }}{% if r.announced_on %} {{ r.announced_on|date:"Y" }}{% endif %}{% if lead %} ({% translate "lead" %}){% endif %}{% if not forloop.last %}, {% endif %}{% empty %}–{% endfor %}</td>
+        <td>{% for p in k.participations %}<a href="{% url 'deal_detail' p.deal_id %}">{{ p.deal.round_name|default:_("deal") }}</a>: {{ p.get_status_display }}{% if not forloop.last %}, {% endif %}{% empty %}–{% endfor %}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table></div>
+  {% else %}
+  <p class="muted small">{% translate "No investors known yet. They are collected from the funding history and from the investors you record in each round." %}</p>
+  {% endif %}
+</section>

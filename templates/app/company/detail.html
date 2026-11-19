@@ -21,6 +21,8 @@
 
 <div class="grid">
   {% if pending or latest_job or company.status == "prospect" %}{% include "app/_suggestions.html" %}{% endif %}
+  {% include "app/_funding_rounds.html" %}
+  {% include "app/company/_investors.html" %}
   {% include "app/company/_position.html" %}
   {% include "app/company/_value.html" %}
   {% include "app/company/_governance.html" %}

@@ -11,6 +11,22 @@
       {% empty %}<tr><td colspan="6" class="muted">{% translate "No investors recorded yet." %}</td></tr>{% endfor %}
     </tbody>
   </table></div>
+  {% if existing_investors %}
+  <h3>{% translate "Existing investors in the company" %}</h3>
+  <ul class="suggestion-list existing">
+    {% for k in existing_investors %}
+    <li><div class="what"><span><strong>{{ k.investor.name }}</strong>
+        <span class="badge kind-{{ k.investor.kind }}">{{ k.investor.get_kind_display }}</span></span>
+        <small class="muted">{% for r, lead in k.rounds %}{{ r.round_name }}{% if r.announced_on %} {{ r.announced_on|date:"Y" }}{% endif %}{% if lead %} ({% translate "lead" %}){% endif %}{% if not forloop.last %}, {% endif %}{% endfor %}</small></div>
+      {% if perms.core.add_roundparticipant %}
+      <form hx-post="{% url 'participant_add' deal.pk %}" hx-target="#deal-{{ deal.pk }}-participants" hx-swap="outerHTML" class="decide">
+        <input type="hidden" name="investor" value="{{ k.investor.name }}"><input type="hidden" name="kind" value="{{ k.investor.kind }}">
+        <input type="hidden" name="role" value="participant"><input type="hidden" name="status" value="contacted">
+        <button class="btn small" type="submit">+ {% translate "Add to this round" %}</button></form>
+      {% endif %}</li>
+    {% endfor %}
+  </ul>
+  {% endif %}
   {% if perms.core.add_roundparticipant %}
   <form class="quick-add" hx-post="{% url 'participant_add' deal.pk %}" hx-target="#deal-{{ deal.pk }}-participants" hx-swap="outerHTML">
     {{ participant_form.investor }}{{ participant_form.kind }}{{ participant_form.role }}{{ participant_form.status }}

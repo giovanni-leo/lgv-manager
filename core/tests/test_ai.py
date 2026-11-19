@@ -477,3 +477,87 @@ class SchemaIntegrityTests(TestCase):
                   AND c.connamespace = 'public'::regnamespace
                 GROUP BY 1, 2 HAVING count(*) > 1""")
             self.assertEqual(cursor.fetchall(), [])
+
+
+@AI_ON
+class FundingHistoryTests(TestCase):
+    def setUp(self):
+        self.company = Company.objects.create(name="CardioSense SA", status="portfolio")
+        self.user = User.objects.create_superuser("g", "g@example.com", "a-long-test-password")
+        self.job = AiJob.objects.create(kind="web_research", company=self.company, status="done")
+
+    def past_round(self, **extra):
+        payload = {**research_result().past_rounds[0].model_dump(), **extra}
+        return Suggestion.objects.create(job=self.job, company=self.company, target="past_round",
+                                         payload=payload, label="Series B")
+
+    def test_accepted_round_goes_to_funding_history(self):
+        from core.models import FundingRound
+
+        decide(self.past_round(), self.user, accept=True)
+        r = FundingRound.objects.get(company=self.company)
+        self.assertEqual((r.round_name, r.announced_on, r.amount, r.post_money, r.currency),
+                         ("Series B", date(2025, 6, 1), Decimal("8000000.00"), Decimal("40000000.00"), "CHF"))
+        self.assertEqual([i.name for i in r.leads], ["Alpine Health Ventures"])
+        self.assertEqual([(i.name, i.kind) for i in r.others], [("MedCorp AG", "strategic")])
+        self.assertTrue(Valuation.objects.filter(company=self.company, post_money=Decimal("40000000")).exists())
+        self.assertFalse(Interaction.objects.exists())                 # no longer hidden among the news
+        decide(self.past_round(other_investors=[{"name": "Venture Kick", "kind": "public"}]), self.user, True)
+        self.assertEqual(FundingRound.objects.count(), 1)               # same round completed, not duplicated
+        self.assertEqual(FundingRound.objects.get().investors.count(), 3)
+        self.assertEqual(Valuation.objects.count(), 1)
+
+    def test_research_skips_rounds_already_recorded(self):
+        decide(self.past_round(), self.user, accept=True)
+        jobs.suggestions_from_research(AiJob.objects.create(kind="web_research", company=self.company),
+                                       self.company, research_result())
+        self.assertFalse(Suggestion.objects.filter(status="pending", target="past_round").exists())
+
+    def test_rounds_accepted_before_the_history_existed_are_recovered(self):
+        import importlib
+
+        from django.apps import apps
+
+        from core.models import FundingRound
+
+        s = self.past_round()
+        Suggestion.objects.filter(pk=s.pk).update(status="accepted")
+        migration = importlib.import_module("core.migrations.0007_funding_history_backfill")
+        migration.backfill(apps)
+        migration.backfill(apps)                                       # running twice changes nothing
+        self.assertEqual(FundingRound.objects.get().round_name, "Series B")
+
+    def test_shown_on_company_and_deal_pages(self):
+        decide(self.past_round(), self.user, accept=True)
+        deal = Deal.objects.create(company=self.company, round_name="Series C")
+        verified_client(self.client, self.user)
+        for url in (f"/companies/{self.company.pk}/", f"/deals/{deal.pk}/"):
+            page = self.client.get(url)
+            self.assertContains(page, "Funding history")
+            self.assertContains(page, "CHF 8M")
+            self.assertContains(page, "Alpine Health Ventures · lead")
+
+    def test_known_investors_on_company_and_deal_pages(self):
+        decide(self.past_round(), self.user, accept=True)
+        deal = Deal.objects.create(company=self.company, round_name="Series C")
+        alpine = CoInvestor.objects.get(name="Alpine Health Ventures")
+        RoundParticipant.objects.create(deal=deal, co_investor=alpine, role="lead", status="committed")
+        verified_client(self.client, self.user)
+
+        company_page = self.client.get(f"/companies/{self.company.pk}/").content.decode()
+        investors = company_page.split("<h2>Investors")[1].split("</section>")[0]
+        self.assertIn("Alpine Health Ventures", investors)
+        self.assertIn("Series B 2025 (lead)", investors)
+        self.assertIn("Series C</a>: Committed", investors)
+        self.assertIn("MedCorp AG", investors)
+        self.assertLess(company_page.index("Funding history"), company_page.index("Our position"))
+
+        deal_page = self.client.get(f"/deals/{deal.pk}/").content.decode()
+        existing = deal_page.split("Existing investors in the company")[1].split("</ul>")[0]
+        self.assertIn("MedCorp AG", existing)
+        self.assertNotIn("Alpine Health Ventures", existing)          # already in this round
+        self.client.post(f"/deals/{deal.pk}/participants/", {"investor": "MedCorp AG", "kind": "strategic",
+                                                             "role": "participant", "status": "contacted"})
+        added = RoundParticipant.objects.get(deal=deal, co_investor__name="MedCorp AG")
+        self.assertEqual(added.status, "contacted")
+        self.assertEqual(CoInvestor.objects.filter(name="MedCorp AG").count(), 1)

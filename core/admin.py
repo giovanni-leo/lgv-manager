@@ -14,7 +14,7 @@ from django.utils.http import url_has_allowed_host_and_scheme
 from django.utils.html import format_html, format_html_join
 from django.utils.translation import gettext_lazy as _
 
-from .models import (AiJob, CoInvestor, InboundEmail, Suggestion, Company, CompanyMetric, Contact, RoundParticipant, ConvertibleTerms, Deal, DealStageHistory,
+from .models import (AiJob, CoInvestor, FundingRound, FundingRoundInvestor, InboundEmail, Suggestion, Company, CompanyMetric, Contact, RoundParticipant, ConvertibleTerms, Deal, DealStageHistory,
                      Document, DocumentLink, FxRate, InvestingEntity, Investment, Interaction,
                      Milestone, OptionPool, Realization, ShareClass, ShareEvent, Valuation)
 from . import admin_users  # noqa: F401  (registers the simplified user admin)
@@ -442,3 +442,19 @@ class SuggestionAdmin(ModelAdmin):
     search_fields = ["label", "company__name"]
     autocomplete_fields = ["company", "deal"]
     essential = ["company", "deal", "target", "label", "status", "source_url", "evidence"]
+
+
+class FundingRoundInvestorInline(TabularInline):
+    model = FundingRoundInvestor
+    classes = []
+    show_change_link = False
+    autocomplete_fields = ["co_investor"]
+
+
+@admin.register(FundingRound)
+class FundingRoundAdmin(ModelAdmin):
+    list_display = ["company", "round_name", "announced_on", "amount", "post_money", "currency"]
+    search_fields = ["company__name", "round_name"]
+    autocomplete_fields = ["company"]
+    essential = ["company", "round_name", "announced_on", "amount", "pre_money", "post_money", "currency"]
+    inlines = [FundingRoundInvestorInline]

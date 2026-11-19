@@ -18,8 +18,8 @@ from .models import (FUNNEL_STAGES, CoInvestor, Company, Contact, Deal, DealStag
                      RoundParticipant)
 from .sections import SECTIONS, formfield
 from .services.ownership import consistency_warnings
-from .services.portfolio import (company_summary, deal_summary, portfolio_totals, report_documents,
-                                 runway, timeline)
+from .services.portfolio import (company_summary, deal_summary, known_investors, portfolio_totals,
+                                 report_documents, runway, timeline)
 
 OPEN_STAGES = [s.value for s in FUNNEL_STAGES if s != DealStage.INVESTED]
 
@@ -101,6 +101,9 @@ def deal_context(request, deal):
         "deal": deal, "company": deal.company, "ds": ds,
         "stages": DealStage.choices,
         "contacts": _deal_contacts(deal, ds.participants),
+        "funding_rounds": deal.company.funding_rounds.prefetch_related("investors__co_investor"),
+        "existing_investors": [k for k in known_investors(deal.company)
+                               if k.investor.pk not in {p.co_investor_id for p in ds.participants}],
         "events": timeline(deal=deal),
         "documents": Document.objects.filter(Q(deal=deal) | Q(company=deal.company)).order_by(
             "-document_date", "-uploaded_at")[:15],
@@ -124,6 +127,8 @@ def company_context(request, company):
         "events": timeline(company=company),
         "reports": report_documents(company),
         "contacts": [{"contact": c, "label": ""} for c in company.contacts.all()],
+        "funding_rounds": company.funding_rounds.prefetch_related("investors__co_investor"),
+        "investors": known_investors(company),
         "documents": company.documents.order_by("-document_date", "-uploaded_at")[:15],
         "metrics": company.metrics.order_by("-as_of")[:4],
         "interaction_form": InteractionForm(initial={"occurred_on": timezone.localdate(), "kind": "note"}),

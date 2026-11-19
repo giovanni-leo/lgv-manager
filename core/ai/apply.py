@@ -132,28 +132,18 @@ def _contact(s):
 
 
 def _past_round(s):
-    p = s.payload
-    when = parse_date(p.get("announced_on")) or timezone.localdate()
-    currency = (p.get("currency") or "CHF").upper()
-    leads = [i["name"] for i in p.get("lead_investors", [])]
-    others = [i["name"] for i in p.get("other_investors", [])]
-    for investor in p.get("lead_investors", []) + p.get("other_investors", []):
-        get_or_create_investor(investor["name"], investor.get("kind", "other"))
-    details = []
-    if leads:
-        details.append("Lead: " + ", ".join(leads))
-    if others:
-        details.append("Other investors: " + ", ".join(others))
-    if p.get("source_url"):
-        details.append(f"Source: {p['source_url']}")
-    Interaction.objects.create(company=s.company, occurred_on=when, kind="news", summary=s.label,
-                               details="\n".join(details) or None)
-    post_money = parse_amount(p.get("post_money"))
-    if post_money is None and p.get("pre_money") and p.get("amount"):
-        post_money = parse_amount(p["pre_money"]) + parse_amount(p["amount"])
-    if post_money is not None and currency in settings.CURRENCIES:
-        Valuation.objects.create(company=s.company, valuation_date=when, method="round", post_money=post_money,
-                                 currency=currency, notes=f"{p.get('round_name') or 'Round'} (from public sources)")
+    """Add the round to the company's funding history (and its valuation, when known)."""
+    from core.models import FundingRound, FundingRoundInvestor
+
+    from .funding import record_funding_round
+
+    funding_round = record_funding_round(s.company, s.payload, FundingRound, FundingRoundInvestor, CoInvestor)
+    if funding_round.post_money is not None and funding_round.currency in settings.CURRENCIES:
+        when = funding_round.announced_on or timezone.localdate()
+        Valuation.objects.get_or_create(
+            company=s.company, valuation_date=when, method="round", post_money=funding_round.post_money,
+            defaults={"currency": funding_round.currency,
+                      "notes": f"{funding_round.round_name} (from public sources)"})
 
 
 def _news(s):

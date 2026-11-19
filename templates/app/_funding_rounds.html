@@ -1,0 +1,26 @@
+{% load i18n vc %}<section class="card wide" id="funding-history">
+  <header><h2>{% translate "Funding history" %}</h2>
+    {% if perms.core.add_fundinground %}<a class="btn small" href="{% admin_add 'fundinground' company=company.pk %}">{% translate "Add round" %}</a>{% endif %}</header>
+  {% if funding_rounds %}
+  <div class="table-scroll"><table class="list stack">
+    <thead><tr><th>{% translate "Date" %}</th><th>{% translate "Round" %}</th><th class="num">{% translate "Raised" %}</th>
+      <th class="num">{% translate "Pre-money" %}</th><th class="num">{% translate "Post-money" %}</th><th>{% translate "Investors" %}</th><th></th></tr></thead>
+    <tbody>
+    {% for r in funding_rounds %}
+      <tr>
+        <td>{{ r.announced_on|date:"M Y"|default:"–" }}</td>
+        <td><strong>{{ r.round_name }}</strong></td>
+        <td class="num">{{ r.amount|money:r.currency }}</td>
+        <td class="num">{{ r.pre_money|money:r.currency }}</td>
+        <td class="num">{{ r.post_money|money:r.currency }}</td>
+        <td>{% for i in r.investors.all %}<span class="badge kind-{{ i.co_investor.kind }}" title="{{ i.co_investor.get_kind_display }}">{{ i.co_investor.name }}{% if i.is_lead %} · {% translate "lead" %}{% endif %}</span> {% empty %}–{% endfor %}</td>
+        <td class="row-actions">{% if r.source_url %}<a class="small" href="{{ r.source_url }}" target="_blank" rel="noopener noreferrer">{% translate "source" %} ↗</a>{% endif %}
+          {% if perms.core.change_fundinground %} <a class="small muted" href="{% admin_change 'fundinground' r.pk %}">{% translate "edit" %}</a>{% endif %}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table></div>
+  {% else %}
+  <p class="muted small">{% translate "No past rounds recorded yet." %}{% if perms.core.change_company %} {% translate "Search the web above to find them, or add one by hand." %}{% endif %}</p>
+  {% endif %}
+</section>
