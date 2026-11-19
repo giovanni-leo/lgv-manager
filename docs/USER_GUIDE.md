@@ -89,7 +89,7 @@ While there is something to decide, the card sits at the top of the page; once e
 
 Forward or write an email about a company to the intake address, and the app files it for you within about two minutes.
 
-- **Intake address:** *to be added once the mailbox is set up*. Only emails from authorised senders are read; others are listed in **Inbox** as *Sender not allowed*.
+- **Intake address:** **lakegrowthventuresmanager@gmail.com**. Only emails from authorised senders are read, and only when the mail server confirms they really come from that address; others are listed in **Inbox** as *Sender not allowed*.
 - **No mailbox?** Save the email as an .eml file (Outlook: **File › Save As**; Gmail: **⋮ › Download message**) and upload it in **Inbox** with **Upload .eml**.
 
 What happens next:

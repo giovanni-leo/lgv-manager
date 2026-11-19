@@ -50,6 +50,43 @@ def _collect(msg, body_parts, attachments, depth=0):
                             "mime_type": mime, "data": data})
 
 
+def _domain(value):
+    return (value or "").strip().strip("<>").rsplit("@", 1)[-1].lower().rstrip(".")
+
+
+def _same_or_parent(domain, signer):
+    return bool(signer) and (domain == signer or domain.endswith("." + signer))
+
+
+def sender_authenticated(msg, sender):
+    """True when our own mail server confirmed that the email really comes from the sender's domain.
+
+    The From address is easy to forge. The receiving server (Gmail: mx.google.com) checks DMARC,
+    DKIM and SPF and writes the outcome in an Authentication-Results header at the top of the
+    email. Only that server's header is trusted: a sender can add fake ones further down.
+    """
+    server = settings.MAIL_AUTH_SERVER
+    if not server:
+        return True  # check switched off
+    domain = _domain(sender)
+    for header in msg.get_all("authentication-results") or []:
+        text = re.sub(r"\s+", " ", str(header))
+        if text.split(";", 1)[0].strip().lower() != server.lower():
+            continue
+        results = text.lower()
+        dmarc = re.search(r"\bdmarc=(\w+)[^;]*?header\.from=([^\s;]+)", results)
+        if dmarc and dmarc.group(1) == "pass" and _domain(dmarc.group(2)) == domain:
+            return True
+        for signer in re.findall(r"\bdkim=pass[^;]*?header\.(?:d|i)=@?([^\s;]+)", results):
+            if _same_or_parent(domain, _domain(signer)):
+                return True
+        spf = re.search(r"\bspf=pass[^;]*?smtp\.mailfrom=([^\s;]+)", results)
+        if spf and _domain(spf.group(1)) == domain:
+            return True
+        return False  # only the first header from our server counts
+    return False
+
+
 def parse_eml(raw):
     """Subject, sender, date, body text and attachments of a raw email."""
     msg = BytesParser(policy=policy.default).parsebytes(raw)
@@ -62,7 +99,8 @@ def parse_eml(raw):
     body_parts, attachments = [], []
     _collect(msg, body_parts, attachments)
     message_id = (msg.get("message-id") or "").strip() or f"<sha256-{hashlib.sha256(raw).hexdigest()}>"
-    return {"message_id": message_id, "sender": sender, "subject": str(msg.get("subject", "")).strip(),
+    return {"message_id": message_id, "sender": sender, "authenticated": sender_authenticated(msg, sender),
+            "subject": str(msg.get("subject", "")).strip(),
             "sent_at": sent_at, "body": "\n".join(p for p in body_parts if p).strip(), "attachments": attachments}
 
 
@@ -91,6 +129,10 @@ def ingest_raw(raw, uploaded_by=None):
         if uploaded_by is None and not sender_allowed(info["sender"]):
             inbound.status = InboundEmail.Status.REJECTED
             inbound.note = "The sender is not in MAIL_ALLOWED_SENDERS; the email was not analysed."
+        elif uploaded_by is None and not info["authenticated"]:
+            inbound.status = InboundEmail.Status.REJECTED
+            inbound.note = ("The mail server could not confirm that the email comes from the sender's address "
+                            "(DMARC/DKIM/SPF); it was not analysed. Upload it in Inbox if it is genuine.")
         elif not settings.AI_ENABLED:
             inbound.status = InboundEmail.Status.FAILED
             inbound.note = "Claude is not configured (ANTHROPIC_API_KEY missing)."

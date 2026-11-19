@@ -304,6 +304,32 @@ class EmailTests(TestCase):
         self.assertEqual(inbound.status, "rejected")
         self.assertFalse(AiJob.objects.exists())
 
+    @override_settings(MAIL_AUTH_SERVER="mx.google.com")
+    def test_forged_sender_is_not_analysed(self):
+        def with_auth(*headers, subject="CardioSense Series C"):
+            raw = make_eml(subject=subject)
+            return b"".join(f"Authentication-Results: {h}\r\n".encode() for h in headers) + raw
+
+        genuine = ("mx.google.com; dkim=pass header.i=@lakegrowth.example header.s=s1; "
+                   "spf=pass smtp.mailfrom=anna@lakegrowth.example; "
+                   "dmarc=pass (p=REJECT sp=REJECT dis=NONE) header.from=lakegrowth.example")
+        self.assertEqual(mail.ingest_raw(with_auth(genuine)).status, "received")
+        forged = [
+            (),                                                                   # no verdict at all
+            ("mx.google.com; dkim=none; spf=softfail smtp.mailfrom=x@evil.example; dmarc=fail "
+             "header.from=lakegrowth.example",),
+            ("mx.google.com; dkim=pass header.i=@evil.example; spf=pass smtp.mailfrom=x@evil.example",),
+            ("mx.google.com; spf=fail smtp.mailfrom=x@evil.example", genuine),     # fake header below Gmail's
+            ("evil.example; " + genuine.split("; ", 1)[1],),                      # not our server
+        ]
+        for i, headers in enumerate(forged):
+            inbound = mail.ingest_raw(with_auth(*headers, subject=f"Forged {i}"))
+            self.assertEqual(inbound.status, "rejected", headers)
+            self.assertIn("could not confirm", inbound.note)
+        self.assertEqual(AiJob.objects.count(), 1)
+        uploaded = mail.ingest_raw(with_auth(subject="Uploaded"), uploaded_by=self.user)  # trusted upload
+        self.assertNotEqual(uploaded.status, "rejected")
+
     def test_email_creates_deal_documents_and_suggestions(self):
         inbound = self.process(make_eml())
         self.assertEqual(inbound.status, "done")

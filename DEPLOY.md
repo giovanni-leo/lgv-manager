@@ -164,16 +164,21 @@ con `docker compose up`.
    `ANTHROPIC_API_KEY=sk-ant-...`, e riavvia con `docker compose up -d`.
    Costo indicativo: una ricerca web va da qualche decina di centesimi a qualche franco, a seconda di
    quante pagine Claude consulta; la lettura di un'email con un pitch deck in genere meno. Il costo approssimativo di ogni lavoro è visibile in *Data → Claude jobs*.
-2. **Casella email (facoltativa).** Crea una casella dedicata, per esempio `deals@tuodominio.ch`,
-   presso un fornitore che offre IMAP con password (Infomaniak sì; Microsoft 365 richiede OAuth e va
-   configurato a parte). Nel `.env`:
+2. **Casella email (facoltativa).** Serve una casella dedicata con accesso IMAP e password, per
+   esempio un account Gmail (con la verifica in due passaggi attiva e una *password per le app*,
+   da myaccount.google.com/apppasswords) o una casella Infomaniak. Microsoft 365 richiede OAuth e
+   va configurato a parte. Nel `.env`:
    ```ini
-   MAIL_IMAP_HOST=mail.infomaniak.com
-   MAIL_IMAP_USER=deals@tuodominio.ch
-   MAIL_IMAP_PASSWORD=...
-   MAIL_ALLOWED_SENDERS=@lakegrowth.ch,collega@altrodominio.ch
+   MAIL_IMAP_HOST=imap.gmail.com
+   MAIL_IMAP_USER=lakegrowthventuresmanager@gmail.com
+   MAIL_IMAP_PASSWORD=abcdefghijklmnop
+   MAIL_ALLOWED_SENDERS=@tuodominio.ch,collega@altrodominio.ch
    ```
-   Solo i mittenti elencati vengono analizzati; gli altri restano nell'Inbox come "Sender not allowed".
+   Poi `docker compose up -d` e la prova: `docker compose exec app python manage.py check_mailbox`.
+   Vengono analizzate solo le email dei mittenti elencati **e** che il server di posta conferma
+   autentiche (DMARC/DKIM/SPF, così un mittente falsificato viene scartato); le altre restano
+   nell'Inbox senza analisi. Per Gmail il controllo è automatico; per altri fornitori indicare il
+   server in `MAIL_AUTH_SERVER`. Il worker legge la casella ogni 2 minuti e segna le email come lette.
    Senza casella si possono comunque caricare file `.eml` dalla pagina *Inbox*.
 3. **Riservatezza.** Testo delle email e allegati PDF vengono inviati all'API di Anthropic per
    l'analisi. Verifica che sia compatibile con gli accordi di riservatezza e con la nLPD; con

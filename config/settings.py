@@ -171,8 +171,11 @@ AI_PRICE_OUTPUT_PER_MTOK = float(env("AI_PRICE_OUTPUT_PER_MTOK", "20"))
 MAIL_IMAP_HOST = env("MAIL_IMAP_HOST", "")
 MAIL_IMAP_PORT = int(env("MAIL_IMAP_PORT", "993"))
 MAIL_IMAP_USER = env("MAIL_IMAP_USER", "")
-MAIL_IMAP_PASSWORD = env("MAIL_IMAP_PASSWORD", "")
+MAIL_IMAP_PASSWORD = env("MAIL_IMAP_PASSWORD", "").replace(" ", "")  # Google shows app passwords in groups of 4
 MAIL_IMAP_FOLDER = env("MAIL_IMAP_FOLDER", "INBOX")
+# The receiving server whose Authentication-Results header proves the sender is genuine;
+# empty switches the check off. Gmail mailboxes: mx.google.com.
+MAIL_AUTH_SERVER = env("MAIL_AUTH_SERVER", "mx.google.com" if MAIL_IMAP_HOST == "imap.gmail.com" else "")
 MAIL_ALLOWED_SENDERS = [s.lower() for s in env_list("MAIL_ALLOWED_SENDERS", "")]
 MAIL_POLL_SECONDS = int(env("MAIL_POLL_SECONDS", "120"))
 MAIL_MAX_ATTACHMENT_MB = int(env("MAIL_MAX_ATTACHMENT_MB", "25"))
