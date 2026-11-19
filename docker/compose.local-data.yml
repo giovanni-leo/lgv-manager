@@ -1,0 +1,17 @@
+# Keep the database, uploaded documents and certificates in ./data next to the
+# code instead of Docker volumes: one folder to back up, independent of how the
+# host manages Docker (used on Umbrel). Enabled with COMPOSE_FILE in .env.
+services:
+  db:
+    volumes:
+      - ./data/postgres:/var/lib/postgresql/data
+  app:
+    volumes:
+      - ./data/media:/data/media
+  worker:
+    volumes:
+      - ./data/media:/data/media
+  proxy:
+    volumes:
+      - ./data/caddy:/data
+      - ./data/caddy-config:/config
