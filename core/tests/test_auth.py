@@ -29,6 +29,10 @@ class TwoFactorTests(TestCase):
     def test_health_check_is_public(self):
         self.assertEqual(self.client.get("/healthz").status_code, 200)
 
+    def test_health_check_works_on_localhost_whatever_the_domain(self):
+        # The Docker health check calls http://localhost:8000/healthz.
+        self.assertEqual(self.client.get("/healthz", HTTP_HOST="localhost:8000").status_code, 200)
+
     def test_anonymous_user_is_sent_to_login(self):
         for url in ["/", "/admin/", "/admin/core/company/"]:
             response = self.client.get(url)
