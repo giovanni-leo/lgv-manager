@@ -43,8 +43,8 @@ A new company enters the app together with its first deal. There are three ways 
 1. Go to **Pipeline** (or **Home**) and click **New deal**.
 2. Choose an **Existing company**, or type the name of a new one in **…or new company** (and its sector).
 3. Fill in what you know: round, round size, pre-money valuation, our ticket, currency, round deadline, source contact. Everything can be completed later.
-4. Leave **Let Claude search the web…** ticked to have Claude look for the company's description, past rounds, investors, people and news (section 5).
-5. Click **Create**: the deal page opens, and the deal appears in **Pipeline** under *Sourced*.
+4. Click **Create**: the deal page opens, and the deal appears in **Pipeline** under *Sourced*.
+5. To have Claude look for the company's description, past rounds, investors, people and news, click **Search the web** at the bottom of the page (section 5).
 
 ## 4. Working on a deal
 
@@ -67,9 +67,9 @@ When the round closes, use **Record the financing round** at the top of the page
 
 ## 5. Web search with Claude
 
-One click asks Claude to research a company on the web; you then accept or reject each finding.
+Claude searches the web only when you ask: never on its own, neither for a new company nor after an email. You then accept or reject each finding.
 
-1. On a company or deal page, click **Search the web** in the **Suggestions from Claude** card (or tick the box when creating a deal).
+1. On a company or deal page, scroll to the **Suggestions from Claude** card at the bottom and click **Search the web** (bottom right). If the company was already searched, the button reads **Update the web search** and shows the date of the last search.
 2. Claude searches for one to three minutes. You can leave the page; the card updates by itself.
 3. Each finding is shown with its type, a short evidence and the link to its **source**. Findings marked *medium* or *low confidence* deserve a check.
 4. Click **Accept** to save it or **Reject** to discard it. **Accept all** and **Reject all** handle the whole list.
@@ -83,7 +83,7 @@ Where accepted findings go:
 | Person (founder, executive, board member) | A contact of the company |
 | News | An entry in **Activity and events** |
 
-While there is something to decide, the card sits at the top of the page; once everything is accepted or rejected, it moves to the bottom. A new search does not propose what is already recorded. Each search costs a few tens of cents to a few francs; the cost of each run is in **Data › Claude jobs**.
+The card always stays at the bottom of the page. While there is something to decide, a line at the top of the page (*N suggestions from Claude to review ↓*) takes you there. A new search does not propose what is already recorded. Each search costs a few tens of cents to a few francs; the cost of each run is in **Data › Claude jobs**.
 
 ## 6. Sending an email to the app
 
@@ -98,7 +98,7 @@ What happens next:
 2. The company is matched by name or website, or created if it is new; its open deal is used, or a new one is created under *Sourced*.
 3. Attachments are saved in **Documents** and the email is logged in **Activity and events**.
 4. Round size, pre-money, deadline, investors, contacts and key terms appear as suggestions on the deal page, to accept or reject.
-5. For a new company, a web search starts on its own (section 5).
+5. No web search starts on its own: use **Search the web** on the company page if you want one (section 5).
 
 Tips: one company per email; put its name in the subject; send documents as PDF (Word files are saved but not read). Emails forwarded from founders or other investors work too.
 

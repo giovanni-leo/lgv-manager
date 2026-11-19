@@ -206,3 +206,5 @@ ol.timeline time { color: var(--muted); font-size: .85rem; margin-right: .4rem; 
   .manual { padding: 1rem; }
   .manual table { display: block; overflow-x: auto; }
 }
+.search-footer { display: flex; justify-content: flex-end; align-items: center; gap: .75rem; margin-top: .75rem;
+  padding-top: .6rem; border-top: 1px solid var(--line); }

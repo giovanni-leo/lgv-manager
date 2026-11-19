@@ -19,9 +19,10 @@
   · {{ d.get_stage_display }}{% if d.deadline %} · {% translate "deadline" %} {{ d.deadline|date:"j M Y" }}{% endif %}</p>
 {% endfor %}
 
+{% if pending %}<p class="notice"><a href="#suggestions-card">{% blocktranslate count n=pending|length %}{{ n }} suggestion from Claude to review{% plural %}{{ n }} suggestions from Claude to review{% endblocktranslate %} ↓</a></p>{% endif %}
+
 <div class="grid">
   {% include "app/company/_overview.html" %}
-  {% if pending or latest_job.is_active %}{% include "app/_suggestions.html" %}{% endif %}
   {% if show_portfolio %}
     {% include "app/company/_position.html" %}
     {% include "app/company/_value.html" %}
@@ -37,6 +38,6 @@
     {% include "app/company/_investments.html" %}
     {% include "app/company/_reports.html" %}
   {% endif %}
-  {% if not pending and not latest_job.is_active %}{% include "app/_suggestions.html" %}{% endif %}
+  {% include "app/_suggestions.html" %}
 </div>
 {% endblock %}

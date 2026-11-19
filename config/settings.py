@@ -157,8 +157,6 @@ AI_MODEL = env("AI_MODEL", "claude-opus-5-5")
 AI_RESEARCH_EFFORT = env("AI_RESEARCH_EFFORT", "high")
 AI_EXTRACTION_EFFORT = env("AI_EXTRACTION_EFFORT", "medium")
 AI_MAX_WEB_SEARCHES = int(env("AI_MAX_WEB_SEARCHES", "12"))
-# After an email about a company we know little about, also search the web for it.
-AI_RESEARCH_AFTER_EMAIL = env_bool("AI_RESEARCH_AFTER_EMAIL", True)
 # Send email attachments (decks, term sheets) to Claude for reading.
 AI_READ_ATTACHMENTS = env_bool("AI_READ_ATTACHMENTS", True)
 # Model prices in USD per million tokens, only used to show an approximate cost per job.

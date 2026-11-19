@@ -3,10 +3,6 @@
   {% if latest_job.is_active %}hx-get="{{ card_url }}{% if deal %}?deal={{ deal.pk }}{% endif %}" hx-trigger="every 4s" hx-swap="outerHTML"{% endif %}>
   <header>
     <h2>{% translate "Suggestions from Claude" %}{% if pending %} <span class="count">{{ pending|length }}</span>{% endif %}</h2>
-    {% if ai_enabled and perms.core.change_company and not latest_job.is_active %}
-    <button class="btn small" hx-post="{% url 'research_start' company.pk %}{% if deal %}?deal={{ deal.pk }}{% endif %}"
-            hx-target="#suggestions-card" hx-swap="outerHTML">🔎 {% translate "Search the web" %}</button>
-    {% endif %}
   </header>
 
   {% if latest_job.is_active %}
@@ -50,5 +46,13 @@
   {% endif %}
   {% elif not latest_job.is_active %}
   <p class="muted small">{% if ai_enabled %}{% translate "Search the web to collect past rounds, investors, management and news about this company. Every finding comes with its source and is only saved if you accept it." %}{% else %}{% translate "Claude is not configured: add ANTHROPIC_API_KEY to the .env file to enable web search and email analysis." %}{% endif %}</p>
+  {% endif %}
+
+  {% if ai_enabled and perms.core.change_company and not latest_job.is_active %}
+  <footer class="search-footer">
+    {% if last_research %}<small class="muted">{% translate "Last web search" %}: {{ last_research.created_at|date:"j M Y" }}</small>{% endif %}
+    <button class="btn small" hx-post="{% url 'research_start' company.pk %}{% if deal %}?deal={{ deal.pk }}{% endif %}"
+            hx-target="#suggestions-card" hx-swap="outerHTML">🔎 {% if last_research %}{% translate "Update the web search" %}{% else %}{% translate "Search the web" %}{% endif %}</button>
+  </footer>
   {% endif %}
 </section>

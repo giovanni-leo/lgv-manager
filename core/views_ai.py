@@ -24,6 +24,8 @@ def suggestions_context(company, deal=None, error=None):
         "company": company, "deal": deal, "ai_enabled": settings.AI_ENABLED,
         "pending": sorted(pending, key=lambda x: (TARGET_ORDER.index(x.target), x.created_at)),
         "latest_job": company.ai_jobs.order_by("-created_at").first(),
+        "last_research": company.ai_jobs.filter(kind=AiJob.Kind.WEB_RESEARCH).exclude(status="failed")
+                                .order_by("-created_at").first(),
         "suggestion_error": error,
     }
 

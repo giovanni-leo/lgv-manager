@@ -271,7 +271,6 @@ class ResearchJobTests(TestCase):
 # --- Email intake -------------------------------------------------------------------------
 
 @AI_ON
-@override_settings(AI_RESEARCH_AFTER_EMAIL=False)  # covered by EmailThenResearchTests
 class EmailTests(TestCase):
     def setUp(self):
         self.company = Company.objects.create(name="CardioSense SA", status="portfolio")
@@ -461,9 +460,21 @@ class AiPageTests(TestCase):
         self.assertEqual(self.client.post(f"/suggestions/{s.pk}/accept/").status_code, 403)
         self.assertEqual(self.client.post(f"/companies/{self.company.pk}/research/").status_code, 403)
 
-    def test_new_deal_can_start_research(self):
+    def test_new_deal_does_not_search_the_web(self):
         self.client.post("/deals/new/", {"new_company": "OrthoFlex SA", "currency": "CHF", "research": "on"})
-        self.assertEqual(AiJob.objects.get().company.name, "OrthoFlex SA")
+        self.assertTrue(Company.objects.filter(name="OrthoFlex SA").exists())
+        self.assertFalse(AiJob.objects.exists())
+
+    def test_suggestions_card_is_last_and_offers_an_update(self):
+        job = AiJob.objects.create(kind="web_research", company=self.company, status="done")
+        Suggestion.objects.create(job=job, company=self.company, target="company_field",
+                                  payload={"field": "city", "value": "Bern"}, label="City: Bern")
+        for url in [f"/companies/{self.company.pk}/", f"/deals/{self.deal.pk}/"]:
+            page = self.client.get(url).content.decode()
+            self.assertIn("1 suggestion from Claude to review", page)          # pointer at the top
+            self.assertGreater(page.index('id="suggestions-card"'), page.index('id="documents-card"')
+                               if 'id="documents-card"' in page else page.index("Documents"))
+            self.assertIn("Update the web search", page)
 
     def test_inbox_upload_and_reprocess(self):
         upload = SimpleUploadedFile("mail.eml", make_eml(sender="anyone@outside.example"), "message/rfc822")
@@ -590,16 +601,18 @@ class FundingHistoryTests(TestCase):
         self.assertEqual(added.status, "contacted")
         self.assertEqual(CoInvestor.objects.filter(name="MedCorp AG").count(), 1)
 
-    def test_settled_suggestions_move_to_the_bottom(self):
+    def test_suggestions_are_always_at_the_bottom(self):
         verified_client(self.client, self.user)
         url = f"/companies/{self.company.pk}/"
         s = self.past_round()
         html = self.client.get(url).content.decode()
-        self.assertLess(html.index("Suggestions from Claude"), html.index("Funding history"))
+        self.assertGreater(html.index("Suggestions from Claude"), html.index("<h2>Contacts"))
+        self.assertLess(html.index('href="#suggestions-card"'), html.index("Funding history"))
         decide(s, self.user, accept=True)
         html = self.client.get(url).content.decode()
         self.assertGreater(html.index("Suggestions from Claude"), html.index("<h2>Contacts"))
-        self.assertIn("Search the web", html)                         # still available, at the bottom
+        self.assertNotIn('href="#suggestions-card"', html)
+        self.assertIn("Update the web search", html)
         deal = Deal.objects.create(company=self.company)
         html = self.client.get(f"/deals/{deal.pk}/").content.decode()
         self.assertGreater(html.index("Suggestions from Claude"), html.index("<h2>Round"))
@@ -627,25 +640,10 @@ class FundingHistoryTests(TestCase):
 
 
 @AI_ON
-class EmailThenResearchTests(TestCase):
-    def process(self, result):
+class NoAutomaticResearchTests(TestCase):
+    def test_email_about_a_new_company_does_not_search_the_web(self):
         mail.ingest_raw(make_eml())
-        with mock.patch.object(claude, "extract_email", return_value=(result, claude.Usage(), [])):
+        with mock.patch.object(claude, "extract_email", return_value=(email_result("OrthoFlex SA"), claude.Usage(), [])):
             jobs.run_job(jobs.claim_next_job())
-
-    def test_new_company_from_email_is_researched_on_the_web(self):
-        self.process(email_result("OrthoFlex SA"))
-        research = AiJob.objects.get(kind="web_research")
-        self.assertEqual(research.company.name, "OrthoFlex SA")
-        self.assertEqual(research.status, "queued")
-        self.assertIn("Web research started", AiJob.objects.get(kind="email").summary)
-
-    def test_well_known_company_is_not_researched_again(self):
-        Company.objects.create(name="CardioSense SA", description="Known already.")
-        self.process(email_result("CardioSense"))
-        self.assertFalse(AiJob.objects.filter(kind="web_research").exists())
-
-    @override_settings(AI_RESEARCH_AFTER_EMAIL=False)
-    def test_can_be_turned_off(self):
-        self.process(email_result("OrthoFlex SA"))
+        self.assertEqual(Company.objects.get(name="OrthoFlex SA").deals.count(), 1)
         self.assertFalse(AiJob.objects.filter(kind="web_research").exists())
