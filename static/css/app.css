@@ -183,3 +183,10 @@ ol.timeline time { color: var(--muted); font-size: .85rem; margin-right: .4rem; 
 @media (max-width: 800px) { .overview-body { grid-template-columns: 1fr; } }
 .overview .facts.compact { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
 .overview .facts dd { overflow-wrap: anywhere; }
+
+/* Record a financing round */
+.round-form { display: grid; gap: 1rem; max-width: 980px; }
+.round-form h2 { margin-bottom: .6rem; }
+.round-form .calc { font-weight: 600; color: var(--accent); min-height: 1.2em; margin: .5rem 0 0; }
+.existing-rows input[type="text"], .existing-rows input[type="number"] { width: 100%; }
+.round-form .actions { display: flex; gap: .5rem; }

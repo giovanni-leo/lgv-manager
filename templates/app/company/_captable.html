@@ -1,6 +1,7 @@
 {% load i18n vc %}<section class="card wide">
   <header><h2>{% translate "Cap table today" %}</h2>
-    {% if perms.core.change_company %}<a class="btn small" href="{% admin_change 'company' company.pk %}">{% translate "Edit classes and events" %}</a>{% endif %}</header>
+    {% if perms.core.add_investment and perms.core.change_company %}<a class="btn small primary" href="{% url 'record_round' company.pk %}">{% translate "Record a financing round" %}</a>{% endif %}
+    {% if perms.core.change_company %}<a class="btn small subtle" href="{% admin_change 'company' company.pk %}">{% translate "Edit classes and events" %}</a>{% endif %}</header>
   {% if s.classes %}
   <div class="table-scroll"><table class="list">
     <thead><tr><th>{% translate "Class" %}</th><th class="num">{% translate "Outstanding" %}</th><th class="num">{% translate "Ours" %}</th><th class="num">{% translate "% of class" %}</th><th class="num">{% translate "Conversion" %}</th></tr></thead>
@@ -16,5 +17,5 @@
     {% if c.inconsistent %}{% translate "our shares exceed the shares outstanding" %}. {% endif %}
     {% if c.missing_issuance %}{% translate "issuance events are missing" %}. {% endif %}
     {% if c.negative_position %}{% translate "more shares sold than held" %}.{% endif %}</p>{% endfor %}
-  {% else %}<p class="muted">{% translate "No share classes yet." %}</p>{% endif %}
+  {% else %}<p class="muted">{% translate "No cap table yet. Use “Record a financing round”: the first time it also asks for the shares outstanding before the round." %}</p>{% endif %}
 </section>

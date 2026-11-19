@@ -1,0 +1,83 @@
+{% extends "base.html" %}{% load i18n %}
+{% block title %}{% translate "Record a financing round" %} – {{ company.name }}{% endblock %}
+{% block content %}
+<p class="crumbs"><a href="{% url 'company_detail' company.pk %}">{{ company.name }}</a>{% if deal %} › <a href="{% url 'deal_detail' deal.pk %}">{{ deal.round_name|default:_("deal") }}</a>{% endif %}</p>
+<h1>{% translate "Record a financing round" %}</h1>
+<p class="muted">{% translate "One form for the whole round: the app creates the share class, the new shares, our investment, the option pool, the valuation and the line in the funding history." %}</p>
+
+<form method="post" class="round-form">{% csrf_token %}
+  {% if form.non_field_errors %}<div class="notice">{{ form.non_field_errors }}</div>{% endif %}
+
+  {% if first_time %}
+  <section class="card">
+    <h2>{% translate "1. Cap table before this round" %}</h2>
+    <p class="muted small">{% translate "This company has no cap table in the app yet. Enter the shares outstanding before the round, class by class, as in the latest cap table or share register you received. Leave a row empty if not needed." %}</p>
+    <table class="list existing-rows">
+      <thead><tr><th>{% translate "Class" %}</th><th>{% translate "Shares outstanding" %}</th><th>{% translate "Common" %}</th></tr></thead>
+      <tbody>{% for name, shares, common in form.existing_rows %}
+        <tr><td>{{ name }}{{ name.errors }}</td><td>{{ shares }}{{ shares.errors }}</td><td>{{ common }}</td></tr>
+      {% endfor %}</tbody>
+    </table>
+  </section>
+  {% endif %}
+
+  <section class="card">
+    <h2>{% if first_time %}2.{% else %}1.{% endif %} {% translate "The round" %}</h2>
+    <div class="form-grid">
+      {% for f in form %}{% if f.name in "round_name round_date share_class new_class_name price_per_share new_shares currency pre_money" %}
+      <label class="field{% if f.errors %} has-error{% endif %}"><span>{{ f.label }}</span>{{ f }}{{ f.errors }}</label>
+      {% endif %}{% endfor %}
+    </div>
+    <p class="calc muted" id="raised-hint"></p>
+    <p class="muted small">{% translate "Without a pre-money, the post-money is price per share × fully diluted shares after the round (option pool included)." %}</p>
+  </section>
+
+  <section class="card">
+    <h2>{% if first_time %}3.{% else %}2.{% endif %} {% translate "Our participation" %} <span class="muted small">({% translate "leave empty if we did not invest" %})</span></h2>
+    <div class="form-grid">
+      {% for f in form %}{% if f.name in "our_shares our_amount" or f.name == "entity" and not single_entity %}
+      <label class="field{% if f.errors %} has-error{% endif %}"><span>{{ f.label }}</span>{{ f }}{{ f.errors }}</label>
+      {% endif %}{% endfor %}
+      {% if single_entity %}<input type="hidden" name="entity" value="{{ form.entity.value|default:'' }}">{% endif %}
+    </div>
+    <p class="calc muted" id="ours-hint"></p>
+  </section>
+
+  <section class="card">
+    <h2>{% if first_time %}4.{% else %}3.{% endif %} {% translate "After the round" %}</h2>
+    <div class="form-grid">
+      {% for f in form %}{% if f.name in "pool_size warrants lead_investors other_investors notes" %}
+      <label class="field{% if f.errors %} has-error{% endif %}{% if f.name == 'notes' %} span-all{% endif %}"><span>{{ f.label }}</span>{{ f }}{{ f.errors }}</label>
+      {% endif %}{% endfor %}
+    </div>
+  </section>
+
+  <div class="actions">
+    <button class="btn primary" type="submit">{% translate "Record the round" %}</button>
+    <a class="btn" href="{% if deal %}{% url 'deal_detail' deal.pk %}{% else %}{% url 'company_detail' company.pk %}{% endif %}">{% translate "Cancel" %}</a>
+  </div>
+</form>
+
+<script>
+(function () {
+  const $ = (id) => document.getElementById(id);
+  const val = (id) => parseFloat(($(id) && $(id).value) || "") || 0;
+  const cur = () => (document.querySelector('[name="currency"]') || {}).value || "CHF";
+  const fmt = (n) => n.toLocaleString("de-CH", {maximumFractionDigits: 0});
+  function update() {
+    const price = val("price"), shares = val("new_shares"), ours = val("our_shares"), amount = val("our_amount");
+    $("raised-hint").textContent = price && shares ? `Amount raised: ${cur()} ${fmt(price * shares)}` : "";
+    let text = "";
+    if (price && ours && !amount) text = `We invest ${cur()} ${fmt(price * ours)}`;
+    else if (price && amount && !ours) text = `We get ${fmt(Math.round(amount / price))} shares`;
+    if (shares && (ours || (price && amount))) {
+      const s = ours || Math.round(amount / price);
+      text += `${text ? " · " : ""}${(100 * s / shares).toFixed(1)}% of the new shares`;
+    }
+    $("ours-hint").textContent = text;
+  }
+  document.querySelector(".round-form").addEventListener("input", update);
+  update();
+})();
+</script>
+{% endblock %}

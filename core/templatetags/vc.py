@@ -52,7 +52,8 @@ def ratio_pct(value, decimals=1):
     """A fraction (0.25) as a percentage (25.0%)."""
     if value in (None, ""):
         return "–"
-    return f"{Decimal(value) * 100:.{int(decimals)}f}%"
+    text = f"{Decimal(value) * 100:.{int(decimals)}f}%"
+    return text[1:] if text.startswith("-") and float(text[1:-1]) == 0 else text  # no "-0.0%"
 
 
 @register.filter

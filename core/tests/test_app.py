@@ -219,7 +219,7 @@ class PageTests(TestCase):
         self.assertEqual(self.deal.closed_on, timezone.localdate())
         self.assertEqual(self.co.status, "portfolio")
         self.assertEqual(DealStageHistory.objects.filter(deal=self.deal).last().to_stage, "invested")
-        self.assertContains(self.client.get(f"/deals/{self.deal.pk}/"), "Record our investment")
+        self.assertContains(self.client.get(f"/deals/{self.deal.pk}/"), "Record the financing round")
 
     def test_quick_activity_entry(self):
         response = self.client.post("/interactions/add/", {"company": self.co.pk, "deal": self.deal.pk,

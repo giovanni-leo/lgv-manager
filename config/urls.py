@@ -5,7 +5,7 @@ from django.urls import include, path
 from django.views.generic import RedirectView
 from two_factor.urls import urlpatterns as tf_urls
 
-from core import views, views_ai, views_app
+from core import views, views_ai, views_app, views_rounds
 from core.views_auth import FundQRGeneratorView, FundSetupView
 from core.admin_site import patch_admin_site
 
@@ -33,6 +33,7 @@ urlpatterns = [
     path("interactions/add/", views_app.interaction_add, name="interaction_add"),
     path("portfolio/", views_app.portfolio, name="portfolio"),
     path("companies/<int:pk>/", views_app.company_detail, name="company_detail"),
+    path("companies/<int:company_pk>/rounds/new/", views_rounds.record_round_view, name="record_round"),
     path("s/<str:kind>/<int:pk>/<str:name>/", views_app.section, name="section"),
     path("companies/<int:company_pk>/suggestions/", views_ai.suggestions_card, name="suggestions_card"),
     path("companies/<int:company_pk>/research/", views_ai.research_start, name="research_start"),
