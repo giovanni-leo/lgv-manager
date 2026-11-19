@@ -1,0 +1,12 @@
+/* Top bar shared by the app pages and the Data section (Django admin). Colours are literal so the admin's own
+   variables cannot change it. */
+.topbar { display: flex; flex-wrap: wrap; gap: .5rem 1rem; align-items: center; justify-content: space-between;
+  padding: .7rem 1rem; background: #fff; border-bottom: 1px solid #e3e6eb; position: sticky; top: 0; z-index: 50;
+  font: 15px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; }
+.topbar nav { display: flex; flex-wrap: wrap; gap: .25rem .9rem; align-items: center; }
+.topbar form { margin: 0; }
+.topbar a, .topbar a:link, .topbar a:visited, .topbar button { color: #1d2433; text-decoration: none; background: none;
+  border: 0; font: inherit; cursor: pointer; padding: .2rem 0; text-transform: none; letter-spacing: normal; }
+.topbar a:hover, .topbar button:hover { color: #0b6e4f; }
+.topbar a[aria-current="page"] { color: #0b6e4f; font-weight: 600; border-bottom: 2px solid #0b6e4f; }
+.topbar .brand, .topbar .brand:link, .topbar .brand:visited { font-weight: 700; color: #0b6e4f; }

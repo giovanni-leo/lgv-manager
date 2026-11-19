@@ -1,7 +1,13 @@
+from functools import lru_cache
+from pathlib import Path
+
+import markdown
+from django.conf import settings
 from django.contrib.auth.decorators import permission_required
 from django.db import connection
 from django.http import FileResponse, HttpResponse, JsonResponse
-from django.shortcuts import get_object_or_404
+from django.shortcuts import get_object_or_404, render
+from django.utils.safestring import mark_safe
 
 from .models import Document
 
@@ -10,6 +16,22 @@ def healthz(request):
     with connection.cursor() as cursor:
         cursor.execute("SELECT 1")
     return JsonResponse({"status": "ok"})
+
+
+MANUAL_PATH = Path(settings.BASE_DIR) / "docs" / "USER_GUIDE.md"
+
+
+@lru_cache(maxsize=4)
+def _manual_html(mtime):
+    # The guide is our own file in the repository, so its HTML is trusted.
+    md = markdown.Markdown(extensions=["tables", "toc", "sane_lists"])
+    return mark_safe(md.convert(MANUAL_PATH.read_text(encoding="utf-8"))), mark_safe(md.toc)
+
+
+def manual(request):
+    """The user guide (docs/USER_GUIDE.md) as an app page."""
+    body, toc = _manual_html(MANUAL_PATH.stat().st_mtime)
+    return render(request, "app/manual.html", {"body": body, "toc": toc})
 
 
 def robots(request):

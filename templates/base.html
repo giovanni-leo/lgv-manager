@@ -8,25 +8,12 @@
   <title>{% block title %}{{ SITE_NAME }}{% endblock %}</title>
   <link rel="icon" href="{% static 'favicon.svg' %}" type="image/svg+xml">
   <link rel="stylesheet" href="{% static 'css/app.css' %}">
+  <link rel="stylesheet" href="{% static 'css/topbar.css' %}">
   <script src="{% static 'vendor/htmx.min.js' %}" defer></script>
   {% block extra_media %}{% endblock %}
 </head>
 <body hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
-  <header class="topbar">
-    <a class="brand" href="{% url 'home' %}">{{ SITE_NAME }}</a>
-    {% if user.is_authenticated and user.is_verified %}
-    <nav>
-      {% url 'home' as home_url %}{% url 'pipeline' as pipeline_url %}{% url 'portfolio' as portfolio_url %}
-      <a href="{{ home_url }}" {% if request.path == home_url %}aria-current="page"{% endif %}>{% translate "Home" %}</a>
-      {% if perms.core.view_deal %}<a href="{{ pipeline_url }}" {% if request.path == pipeline_url or nav_section == "pipeline" %}aria-current="page"{% endif %}>{% translate "Pipeline" %}</a>{% endif %}
-      {% if perms.core.view_company %}<a href="{{ portfolio_url }}" {% if request.path == portfolio_url or nav_section == "portfolio" %}aria-current="page"{% endif %}>{% translate "Portfolio" %}</a>{% endif %}
-      {% if perms.core.view_inboundemail %}{% url 'inbox' as inbox_url %}<a href="{{ inbox_url }}" {% if request.path == inbox_url %}aria-current="page"{% endif %}>{% translate "Inbox" %}</a>{% endif %}
-      <a href="{% url 'admin:index' %}">{% translate "Data" %}</a>
-      <a href="{% url 'two_factor:profile' %}">{% translate "Security" %}</a>
-      <form method="post" action="{% url 'logout' %}">{% csrf_token %}<button type="submit">{% translate "Log out" %}</button></form>
-    </nav>
-    {% endif %}
-  </header>
+  {% include "_topbar.html" %}
   {% block content_wrapper %}<main>
     {% if messages %}<ul class="messages">{% for m in messages %}<li class="{{ m.tags }}">{{ m }}</li>{% endfor %}</ul>{% endif %}
     {% block content %}{% endblock %}</main>{% endblock %}

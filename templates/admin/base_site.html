@@ -1,3 +1,9 @@
 {% extends "admin/base_site.html" %}
 {% load static %}
 {% block extrahead %}{{ block.super }}<link rel="icon" href="{% static 'favicon.svg' %}" type="image/svg+xml">{% endblock %}
+{# Always light, like the rest of the app (no theme toggle). #}
+{% block dark-mode-vars %}{% endblock %}
+{% block extrastyle %}{{ block.super }}<link rel="stylesheet" href="{% static 'css/topbar.css' %}">
+<link rel="stylesheet" href="{% static 'css/admin.css' %}">{% endblock %}
+{# Same top menu as every other page instead of the admin's own header. #}
+{% block header %}{% if not is_popup %}{% include "_topbar.html" %}{% endif %}{% endblock %}

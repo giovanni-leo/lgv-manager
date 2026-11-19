@@ -1,0 +1,19 @@
+/* The Data section (Django admin) in the app's colours. */
+:root, html[data-theme="light"] {
+  --primary: #0b6e4f; --secondary: #0b6e4f; --accent: #e6f2ee; --primary-fg: #fff;
+  --body-fg: #1d2433; --body-quiet-color: #5b6475; --body-bg: #fff; --darkened-bg: #f5f6f8;
+  --header-bg: #fff; --header-color: #1d2433; --header-link-color: #1d2433; --header-branding-color: #0b6e4f;
+  --breadcrumbs-bg: #f5f6f8; --breadcrumbs-fg: #5b6475; --breadcrumbs-link-fg: #0b6e4f;
+  --link-fg: #0b6e4f; --link-hover-color: #084c37; --link-selected-fg: #0b6e4f;
+  --hairline-color: #e3e6eb; --border-color: #c7ccd4; --selected-bg: #e6f2ee; --selected-row: #e6f2ee;
+  --button-bg: #0b6e4f; --button-hover-bg: #084c37; --default-button-bg: #0b6e4f; --default-button-hover-bg: #084c37;
+  --object-tools-bg: #5b6475; --object-tools-hover-bg: #1d2433;
+  --font-family-primary: system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+div.breadcrumbs { border-bottom: 1px solid #e3e6eb; padding: .6rem 1rem; }
+/* The first crumb is the admin index: call it "Data", like the menu entry. */
+div.breadcrumbs > a:first-child { font-size: 0; }
+div.breadcrumbs > a:first-child::before { content: "Data"; font-size: .875rem; }
+.module caption { background: #0b6e4f; color: #fff; }
+#nav-sidebar .current-model { background: #e6f2ee; }
+.module caption a, .module caption a:link, .module caption a:visited, a.section:link, a.section:visited { color: #fff; }

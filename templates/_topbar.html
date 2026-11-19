@@ -1,0 +1,17 @@
+{% load i18n %}<header class="topbar">
+  <a class="brand" href="{% url 'home' %}">{{ SITE_NAME }}</a>
+  {% if user.is_authenticated and user.is_verified %}
+  <nav>
+    {% url 'home' as home_url %}{% url 'pipeline' as pipeline_url %}{% url 'portfolio' as portfolio_url %}{% url 'manual' as manual_url %}
+    <a href="{{ home_url }}" {% if request.path == home_url %}aria-current="page"{% endif %}>{% translate "Home" %}</a>
+    {% if perms.core.view_deal %}<a href="{{ pipeline_url }}" {% if request.path == pipeline_url or nav_section == "pipeline" %}aria-current="page"{% endif %}>{% translate "Pipeline" %}</a>{% endif %}
+    {% if perms.core.view_company %}<a href="{{ portfolio_url }}" {% if request.path == portfolio_url or nav_section == "portfolio" %}aria-current="page"{% endif %}>{% translate "Portfolio" %}</a>{% endif %}
+    {% if perms.core.view_inboundemail %}{% url 'inbox' as inbox_url %}<a href="{{ inbox_url }}" {% if request.path == inbox_url %}aria-current="page"{% endif %}>{% translate "Inbox" %}</a>{% endif %}
+    <a href="{% url 'admin:index' %}" {% if request.path|slice:":7" == "/admin/" %}aria-current="page"{% endif %}>{% translate "Data" %}</a>
+    {% if USER_MANUAL_URL %}<a href="{{ USER_MANUAL_URL }}" target="_blank" rel="noopener">{% translate "Manual" %}</a>
+    {% else %}<a href="{{ manual_url }}" {% if request.path == manual_url %}aria-current="page"{% endif %}>{% translate "Manual" %}</a>{% endif %}
+    <a href="{% url 'two_factor:profile' %}" {% if request.path|slice:":21" == "/account/two_factor/" %}aria-current="page"{% endif %}>{% translate "Security" %}</a>
+    <form method="post" action="{% url 'logout' %}">{% csrf_token %}<button type="submit">{% translate "Log out" %}</button></form>
+  </nav>
+  {% endif %}
+</header>

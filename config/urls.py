@@ -32,6 +32,7 @@ urlpatterns = [
     path("participants/<int:pk>/delete/", views_app.participant_delete, name="participant_delete"),
     path("interactions/add/", views_app.interaction_add, name="interaction_add"),
     path("portfolio/", views_app.portfolio, name="portfolio"),
+    path("manual/", views.manual, name="manual"),
     path("companies/<int:pk>/", views_app.company_detail, name="company_detail"),
     path("companies/<int:company_pk>/rounds/new/", views_rounds.record_round_view, name="record_round"),
     path("s/<str:kind>/<int:pk>/<str:name>/", views_app.section, name="section"),

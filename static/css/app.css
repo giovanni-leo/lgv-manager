@@ -14,13 +14,6 @@ h3 { font-size: .95rem; margin: 1rem 0 .3rem; }
 .small { font-size: .85rem; }
 .pre { white-space: pre-line; }
 
-/* Top bar */
-.topbar { display: flex; flex-wrap: wrap; gap: .5rem 1rem; align-items: center; justify-content: space-between;
-  padding: .7rem 1rem; background: #fff; border-bottom: 1px solid var(--line); position: sticky; top: 0; z-index: 5; }
-.topbar nav { display: flex; flex-wrap: wrap; gap: .25rem .9rem; align-items: center; }
-.topbar a, .topbar button { color: var(--fg); text-decoration: none; background: none; border: 0; font: inherit; cursor: pointer; padding: .2rem 0; }
-.topbar a[aria-current="page"] { color: var(--accent); font-weight: 600; border-bottom: 2px solid var(--accent); }
-.brand { font-weight: 700; color: var(--accent) !important; }
 main { max-width: 1280px; margin: 0 auto; padding: 1rem; }
 
 /* Page header */
@@ -190,3 +183,26 @@ ol.timeline time { color: var(--muted); font-size: .85rem; margin-right: .4rem; 
 .round-form .calc { font-weight: 600; color: var(--accent); min-height: 1.2em; margin: .5rem 0 0; }
 .existing-rows input[type="text"], .existing-rows input[type="number"] { width: 100%; }
 .round-form .actions { display: flex; gap: .5rem; }
+
+/* User manual */
+.manual-layout { display: grid; grid-template-columns: 15rem minmax(0, 1fr); gap: 1rem; align-items: start; }
+.manual-toc { position: sticky; top: 4.5rem; font-size: .9rem; }
+.manual-toc ul { list-style: none; margin: 0; padding: 0; }
+.manual-toc ul ul ul { display: none; }
+.manual-toc .toc > ul > li > a { display: none; }
+.manual-toc ul ul { padding: 0; }
+.manual-toc li { margin: .2rem 0; }
+.manual-toc a { text-decoration: none; }
+.manual { max-width: 860px; padding: 1.2rem 1.6rem; line-height: 1.6; }
+.manual h1 { margin-bottom: 1rem; }
+.manual h2 { font-size: 1.2rem; margin: 1.8rem 0 .5rem; padding-top: .3rem; border-top: 1px solid var(--line); scroll-margin-top: 4.5rem; }
+.manual table { border-collapse: collapse; width: 100%; margin: .6rem 0 1rem; font-size: .92rem; }
+.manual th, .manual td { text-align: left; vertical-align: top; padding: .4rem .6rem; border-bottom: 1px solid var(--line); }
+.manual th { background: var(--bg); font-weight: 600; }
+.manual li { margin: .25rem 0; }
+@media (max-width: 800px) {
+  .manual-layout { grid-template-columns: 1fr; }
+  .manual-toc { position: static; }
+  .manual { padding: 1rem; }
+  .manual table { display: block; overflow-x: auto; }
+}

@@ -120,6 +120,8 @@ AUTH_PASSWORD_VALIDATORS = [
 
 # Name shown in the interface and in authenticator apps (one installation per fund).
 SITE_NAME = env("SITE_NAME", "VC Manager")
+# "Manual" in the menu shows docs/USER_GUIDE.md; set a URL to open an external copy instead.
+USER_MANUAL_URL = env("USER_MANUAL_URL", "")
 
 # --- Authentication / 2FA ----------------------------------------------------
 LOGIN_URL = "two_factor:login"

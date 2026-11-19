@@ -25,7 +25,7 @@ def create_roles(sender, **kwargs):
 class CoreConfig(AppConfig):
     default_auto_field = "django.db.models.BigAutoField"
     name = "core"
-    verbose_name = _("Data")
+    verbose_name = _("Tables")
 
     def ready(self):
         from auditlog.registry import auditlog

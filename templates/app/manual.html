@@ -1,0 +1,8 @@
+{% extends "base.html" %}
+{% block title %}Manual · {{ SITE_NAME }}{% endblock %}
+{% block content %}
+<div class="manual-layout">
+  <nav class="manual-toc card" aria-label="Contents">{{ toc }}</nav>
+  <article class="manual card">{{ body }}</article>
+</div>
+{% endblock %}
