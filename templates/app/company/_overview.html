@@ -1,0 +1,23 @@
+{% load i18n vc %}<section class="card wide overview" id="company-{{ company.pk }}-profile">
+  <header><h2>{% translate "Overview" %}</h2>
+    {% if perms.core.change_company %}<button class="btn small" hx-get="{% url 'section' 'company' company.pk 'profile' %}?edit=1" hx-target="#company-{{ company.pk }}-profile" hx-swap="outerHTML">{% translate "Edit" %}</button>
+      <a class="btn small subtle" href="{% admin_change 'company' company.pk %}">{% translate "All fields" %}</a>{% endif %}</header>
+  <div class="overview-body">
+    <div class="about">
+      {% if company.description %}<p class="description pre">{{ company.description }}</p>
+      {% else %}<p class="muted">{% translate "No description yet." %}{% if perms.core.change_company %} {% translate "Add one with Edit, or let Claude find it with “Search the web”." %}{% endif %}</p>{% endif %}
+      <dl class="facts compact">
+        <div><dt>{% translate "Sector" %}</dt><dd>{{ company.sector|default:"–" }}</dd></div>
+        <div><dt>{% translate "Location" %}</dt><dd>{{ company.city|default:"" }}{% if company.city and company.country %}, {% endif %}{{ company.country|default:"" }}{% if not company.city and not company.country %}–{% endif %}</dd></div>
+        <div><dt>{% translate "Website" %}</dt><dd>{% if company.website %}<a href="{% if '://' not in company.website %}https://{% endif %}{{ company.website }}" target="_blank" rel="noopener">{{ company.website|cut:"https://"|cut:"http://"|truncatechars:32 }}</a>{% else %}–{% endif %}</dd></div>
+        <div><dt>{% translate "Legal name" %}</dt><dd>{{ company.legal_name|default:"–" }}</dd></div>
+      </dl>
+    </div>
+    <dl class="facts compact side">
+      <div><dt>{% translate "Last financing round" %}</dt><dd>{% with r=latest_round %}{% if r %}{{ r.round_name }}{% if r.amount %} · {{ r.amount|money:r.currency }}{% endif %}<small>{{ r.announced_on|date:"M Y"|default:"" }}{% if r.post_money %} · {% translate "post-money" %} {{ r.post_money|money:r.currency }}{% endif %}</small>{% else %}–{% endif %}{% endwith %}</dd></div>
+      <div><dt>{% translate "Key people" %}</dt><dd>{% for row in contacts|slice:":4" %}{{ row.contact.full_name }}{% if row.contact.role %} <small class="inline">{{ row.contact.role }}</small>{% endif %}{% if not forloop.last %}<br>{% endif %}{% empty %}–{% endfor %}</dd></div>
+      <div><dt>{% translate "Next event" %}</dt><dd>{% if next_event %}{{ next_event.title }}<small>{{ next_event.date|date:"j M Y" }} · {{ next_event.date|days_left }}</small>{% else %}–{% endif %}</dd></div>
+      <div><dt>{% translate "Documents" %}</dt><dd>{{ documents_count }}{% if documents_count %}<small><a href="#documents-card">{% translate "see below" %}</a></small>{% endif %}</dd></div>
+    </dl>
+  </div>
+</section>

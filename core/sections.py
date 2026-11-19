@@ -36,6 +36,7 @@ class Section:
     template: str
     perm: str
     row: bool = False  # rendered as a table row instead of a card
+    wide: bool = False  # card spans the whole page width
 
     def form_class(self):
         return forms.modelform_factory(self.model, fields=self.fields, formfield_callback=formfield)
@@ -50,8 +51,8 @@ SECTIONS = {
     ("participant", "row"): Section(RoundParticipant, ("role", "status", "amount", "currency", "contact", "notes"),
                                     "app/deal/_participant_row.html", "change_roundparticipant", row=True),
     ("company", "profile"): Section(Company, ("name", "status", "sector", "city", "country", "website",
-                                              "legal_name", "description"), "app/company/_profile.html",
-                                    "change_company"),
+                                              "legal_name", "description"), "app/company/_overview.html",
+                                    "change_company", wide=True),
     ("company", "governance"): Section(Company, ("board_role", "reporting_frequency", "data_room_url"),
                                        "app/company/_governance.html", "change_company"),
 }

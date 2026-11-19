@@ -550,7 +550,8 @@ class FundingHistoryTests(TestCase):
         self.assertIn("Series B 2025 (lead)", investors)
         self.assertIn("Series C</a>: Committed", investors)
         self.assertIn("MedCorp AG", investors)
-        self.assertLess(company_page.index("Funding history"), company_page.index("Our position"))
+        self.assertLess(company_page.index("<h2>Overview"), company_page.index("Funding history"))
+        self.assertLess(company_page.index("Funding history"), company_page.index("Cap table today"))
 
         deal_page = self.client.get(f"/deals/{deal.pk}/").content.decode()
         existing = deal_page.split("Existing investors in the company")[1].split("</ul>")[0]

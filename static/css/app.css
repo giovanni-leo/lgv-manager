@@ -174,3 +174,12 @@ ol.timeline time { color: var(--muted); font-size: .85rem; margin-right: .4rem; 
 @media (max-width: 640px) { .suggestion-list li { flex-direction: column; } }
 .suggestion-list .what > .badge { align-self: flex-start; }
 .suggestion-list.existing .what > span { display: flex; gap: .4rem; align-items: center; flex-wrap: wrap; }
+
+/* Company overview */
+.overview-body { display: grid; grid-template-columns: minmax(0, 2fr) minmax(220px, 1fr); gap: 1rem 2rem; }
+.overview .description { font-size: 1.02rem; margin-top: 0; }
+.overview .facts.side { grid-template-columns: 1fr; align-content: start; }
+.facts dd small.inline { display: inline; }
+@media (max-width: 800px) { .overview-body { grid-template-columns: 1fr; } }
+.overview .facts.compact { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
+.overview .facts dd { overflow-wrap: anywhere; }

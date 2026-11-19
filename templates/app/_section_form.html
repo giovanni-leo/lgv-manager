@@ -1,4 +1,4 @@
-{% load i18n %}{% if row %}<tr id="{{ section_id }}" class="editing"><td colspan="6">{% else %}<section class="card editing" id="{{ section_id }}">{% endif %}
+{% load i18n %}{% if row %}<tr id="{{ section_id }}" class="editing"><td colspan="6">{% else %}<section class="card editing{% if wide %} wide{% endif %}" id="{{ section_id }}">{% endif %}
 <form hx-post="{{ url }}" hx-target="#{{ section_id }}" hx-swap="outerHTML" class="form-grid">
   {{ form.non_field_errors }}
   {% for field in form %}

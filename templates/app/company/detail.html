@@ -3,10 +3,9 @@
 {% block content %}
 <div class="page-head">
   <div>
-    <p class="crumbs"><a href="{% url 'portfolio' %}">{% translate "Portfolio" %}</a></p>
+    <p class="crumbs">{% if show_portfolio %}<a href="{% url 'portfolio' %}">{% translate "Portfolio" %}</a>{% else %}<a href="{% url 'pipeline' %}">{% translate "Pipeline" %}</a>{% endif %}</p>
     <h1>{{ company.name }} <span class="badge status-{{ company.status }}">{{ company.get_status_display }}</span></h1>
-    <p class="muted">{{ company.sector|default:"" }}{% if company.sector and company.city %} · {% endif %}{{ company.city|default:"" }}
-      {% if company.website %} · <a href="{% if '://' not in company.website %}https://{% endif %}{{ company.website }}" target="_blank" rel="noopener">{% translate "website" %}</a>{% endif %}</p>
+    <p class="muted">{{ company.sector|default:"" }}{% if company.sector and company.city %} · {% endif %}{{ company.city|default:"" }}</p>
   </div>
   <div class="head-actions">
     {% if company.data_room_url %}<a class="btn" href="{{ company.data_room_url }}" target="_blank" rel="noopener">{% translate "Data room" %} ↗</a>{% endif %}
@@ -20,18 +19,22 @@
 {% endfor %}
 
 <div class="grid">
-  {% if pending or latest_job or company.status == "prospect" %}{% include "app/_suggestions.html" %}{% endif %}
+  {% include "app/company/_overview.html" %}
+  {% include "app/_suggestions.html" %}
+  {% if show_portfolio %}
+    {% include "app/company/_position.html" %}
+    {% include "app/company/_value.html" %}
+    {% include "app/company/_governance.html" %}
+  {% endif %}
   {% include "app/_funding_rounds.html" %}
   {% include "app/company/_investors.html" %}
-  {% include "app/company/_position.html" %}
-  {% include "app/company/_value.html" %}
-  {% include "app/company/_governance.html" %}
-  {% include "app/company/_captable.html" %}
-  {% include "app/company/_investments.html" %}
+  {% if show_portfolio %}{% include "app/company/_captable.html" %}{% endif %}
   {% include "app/_events.html" %}
-  {% include "app/company/_reports.html" %}
+  <div id="documents-card">{% include "app/_documents_card.html" %}</div>
   {% include "app/_contacts_card.html" %}
-  {% include "app/_documents_card.html" %}
-  {% include "app/company/_profile.html" %}
+  {% if show_portfolio %}
+    {% include "app/company/_investments.html" %}
+    {% include "app/company/_reports.html" %}
+  {% endif %}
 </div>
 {% endblock %}

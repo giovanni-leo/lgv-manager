@@ -98,6 +98,7 @@ def deal_context(request, deal):
 
     ds = deal_summary(deal)
     return {**suggestions_context(deal.company, deal),
+        "nav_section": "pipeline",
         "deal": deal, "company": deal.company, "ds": ds,
         "stages": DealStage.choices,
         "contacts": _deal_contacts(deal, ds.participants),
@@ -115,19 +116,40 @@ def deal_context(request, deal):
     }
 
 
+def _next_event(company, summary):
+    """The next dated thing to prepare for: a general assembly or a planned milestone."""
+    today = timezone.localdate()
+    candidates = []
+    if summary.next_assembly:
+        candidates.append({"date": summary.next_assembly, "title": "General assembly"})
+    milestone = (company.milestones.filter(status__in=["planned", "delayed"], target_date__gte=today)
+                 .order_by("target_date").first())
+    if milestone:
+        candidates.append({"date": milestone.target_date, "title": milestone.title})
+    return min(candidates, key=lambda c: c["date"]) if candidates else None
+
+
 def company_context(request, company):
     from .views_ai import suggestions_context
 
+    summary = company_summary(company)
+    funding_rounds = list(company.funding_rounds.prefetch_related("investors__co_investor"))
+    show_portfolio = company.status != Company.Status.PROSPECT or company.investments.exists()
     return {**suggestions_context(company),
+        "show_portfolio": show_portfolio,
+        "nav_section": "portfolio" if show_portfolio else "pipeline",
+        "latest_round": funding_rounds[0] if funding_rounds else None,
+        "next_event": _next_event(company, summary),
+        "documents_count": company.documents.count(),
         "company": company,
-        "s": company_summary(company),
+        "s": summary,
         "open_deals": company.deals.filter(stage__in=OPEN_STAGES + ["on_hold"]),
         "investments": company.investments.select_related("share_class").order_by("-invest_date"),
         "realizations": company.realizations.order_by("-realized_on"),
         "events": timeline(company=company),
         "reports": report_documents(company),
         "contacts": [{"contact": c, "label": ""} for c in company.contacts.all()],
-        "funding_rounds": company.funding_rounds.prefetch_related("investors__co_investor"),
+        "funding_rounds": funding_rounds,
         "investors": known_investors(company),
         "documents": company.documents.order_by("-document_date", "-uploaded_at")[:15],
         "metrics": company.metrics.order_by("-as_of")[:4],
@@ -292,7 +314,7 @@ def section(request, kind, pk, name):
                 response["HX-Reswap"] = "outerHTML"
                 return response
         else:
-            return render(request, "app/_section_form.html", {"form": form, "url": url, "row": sec.row,
+            return render(request, "app/_section_form.html", {"form": form, "url": url, "row": sec.row, "wide": sec.wide,
                                                               "section_id": f"{kind}-{pk}-{name}"})
     return render(request, sec.template, _section_context(request, kind, obj))
 

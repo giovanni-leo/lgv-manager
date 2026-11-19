@@ -8,7 +8,7 @@ from django.db import connection
 from django.test import TestCase
 from django.utils import timezone
 
-from core.models import (CoInvestor, Company, CompanyMetric, Deal, DealStageHistory, FxRate, Interaction,
+from core.models import (CoInvestor, Company, CompanyMetric, Contact, Deal, DealStageHistory, FxRate, Interaction,
                          Investment, RoundParticipant, Valuation)
 from core.roles import assign_role
 from core.services.portfolio import company_summary, deal_summary, portfolio_totals, runway, xirr
@@ -304,3 +304,57 @@ class DocumentFileTests(TestCase):
         self.assertIn("inline", response["Content-Disposition"])
         self.assertEqual(self.client.get("/files/../config/settings.py").status_code, 404)
         self.assertEqual(self.client.get("/files/documents/other.pdf").status_code, 404)
+
+
+class CompanyOverviewTests(TestCase):
+    def setUp(self):
+        self.co = Company.objects.create(name="NeuroPath SA", sector="Diagnostics", city="Lausanne",
+                                         description="Blood test for early detection of neurodegeneration.")
+        verified_client(self.client, User.objects.create_superuser("g", "g@example.com", "a-long-test-password"))
+
+    def test_overview_comes_first_with_key_information(self):
+        from core.models import FundingRound, Milestone
+
+        FundingRound.objects.create(company=self.co, round_name="Seed", announced_on=D(2024, 3, 1),
+                                    amount=Decimal("4500000"), post_money=Decimal("18000000"))
+        Milestone.objects.create(company=self.co, title="Pivotal study start", category="clinical",
+                                 target_date=timezone.localdate() + timedelta(days=30))
+        Contact.objects.create(full_name="Marc Dubois", role="CEO", company=self.co)
+        html = self.client.get(f"/companies/{self.co.pk}/").content.decode()
+        overview = html.split("<h2>Overview")[1].split("</section>")[0]
+        for text in ["Blood test for early detection", "Diagnostics", "Lausanne", "Seed", "CHF 4.5M",
+                     "Marc Dubois", "Pivotal study start", "in 30 days"]:
+            self.assertIn(text, overview)
+        self.assertLess(html.index("<h2>Overview"), html.index("Funding history"))
+
+    def test_prospect_page_hides_empty_portfolio_cards(self):
+        html = self.client.get(f"/companies/{self.co.pk}/").content.decode()
+        self.assertNotIn("Our position", html)
+        self.assertNotIn("Cap table today", html)
+        self.assertIn('href="/pipeline/"', html.split("<h1>")[0])
+        Company.objects.filter(pk=self.co.pk).update(status="portfolio")
+        html = self.client.get(f"/companies/{self.co.pk}/").content.decode()
+        self.assertIn("Our position", html)
+        self.assertIn("Cap table today", html)
+
+    def test_overview_is_editable_in_place(self):
+        form = self.client.get(f"/s/company/{self.co.pk}/profile/?edit=1")
+        self.assertContains(form, 'name="description"')
+        self.assertContains(form, "card editing wide")
+        response = self.client.post(f"/s/company/{self.co.pk}/profile/", {
+            "name": "NeuroPath SA", "status": "prospect", "sector": "Diagnostics", "city": "Geneva",
+            "description": "New description."})
+        self.assertContains(response, "New description.")
+        self.assertContains(response, "Geneva")
+
+    def test_deal_page_shows_the_company(self):
+        deal = Deal.objects.create(company=self.co, round_name="Series A")
+        page = self.client.get(f"/deals/{deal.pk}/")
+        self.assertContains(page, "About NeuroPath SA")
+        self.assertContains(page, "Blood test for early detection")
+
+    def test_menu_highlights_pipeline_for_prospects(self):
+        html = self.client.get(f"/companies/{self.co.pk}/").content.decode()
+        nav = html.split("<nav>")[1].split("</nav>")[0]
+        self.assertIn('href="/pipeline/" aria-current="page"', nav)
+        self.assertNotIn('href="/portfolio/" aria-current="page"', nav)
