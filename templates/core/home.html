@@ -31,6 +31,15 @@
       {% empty %}<li class="muted">{% translate "None scheduled." %}</li>{% endfor %}
     </ul>
   </section>
+  <section class="card">
+    <header><h2>{% translate "Recent financing rounds" %}</h2></header>
+    <ul class="docs">
+      {% for r in recent_rounds %}
+      <li><a href="{% url 'company_detail' r.company_id %}"><strong>{{ r.company.name }}</strong></a> · {{ r.round_name }}{% if r.amount %} · {{ r.amount|money:r.currency }}{% endif %}
+        <span class="muted">{{ r.announced_on|date:"M Y" }}{% if r.post_money %} · {% translate "post-money" %} {{ r.post_money|money:r.currency }}{% endif %}{% with leads=r.leads %}{% if leads %} · {% translate "lead" %}: {% for i in leads %}{{ i.name }}{% if not forloop.last %}, {% endif %}{% endfor %}{% endif %}{% endwith %}</span></li>
+      {% empty %}<li class="muted">{% translate "No rounds recorded yet. They appear here as you accept them from web searches or add them to a company." %}</li>{% endfor %}
+    </ul>
+  </section>
   {% if warnings %}
   <section class="card">
     <header><h2>{% translate "Cap table checks" %}</h2></header>

@@ -20,7 +20,7 @@
 
 <div class="grid">
   {% include "app/company/_overview.html" %}
-  {% include "app/_suggestions.html" %}
+  {% if pending or latest_job.is_active %}{% include "app/_suggestions.html" %}{% endif %}
   {% if show_portfolio %}
     {% include "app/company/_position.html" %}
     {% include "app/company/_value.html" %}
@@ -36,5 +36,6 @@
     {% include "app/company/_investments.html" %}
     {% include "app/company/_reports.html" %}
   {% endif %}
+  {% if not pending and not latest_job.is_active %}{% include "app/_suggestions.html" %}{% endif %}
 </div>
 {% endblock %}

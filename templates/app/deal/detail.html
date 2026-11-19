@@ -22,7 +22,7 @@
 {% endif %}
 
 <div class="grid">
-  {% include "app/_suggestions.html" %}
+  {% if pending or latest_job.is_active %}{% include "app/_suggestions.html" %}{% endif %}
   {% include "app/deal/_round.html" %}
   {% include "app/deal/_company.html" %}
   {% include "app/deal/_next.html" %}
@@ -32,5 +32,6 @@
   {% include "app/_events.html" %}
   {% include "app/_documents_card.html" %}
   {% include "app/deal/_details.html" %}
+  {% if not pending and not latest_job.is_active %}{% include "app/_suggestions.html" %}{% endif %}
 </div>
 {% endblock %}

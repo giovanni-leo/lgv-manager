@@ -14,8 +14,8 @@ from django.urls import reverse
 from django.utils import timezone
 from django.views.decorators.http import require_POST
 
-from .models import (FUNNEL_STAGES, CoInvestor, Company, Contact, Deal, DealStage, Document, Interaction,
-                     RoundParticipant)
+from .models import (FUNNEL_STAGES, CoInvestor, Company, Contact, Deal, DealStage, Document, FundingRound,
+                     Interaction, RoundParticipant)
 from .sections import SECTIONS, formfield
 from .services.ownership import consistency_warnings
 from .services.portfolio import (company_summary, deal_summary, known_investors, portfolio_totals,
@@ -348,6 +348,10 @@ def home(request):
     return render(request, "core/home.html", {
         "deadlines": deadlines, "alerts": alerts, "assemblies": assemblies,
         "warnings": _named(consistency_warnings()) if can_companies else [],
+        "recent_rounds": FundingRound.objects.filter(announced_on__isnull=False)
+        .exclude(company__status__in=["archived"]).select_related("company")
+        .prefetch_related("investors__co_investor").order_by("-announced_on", "-id")[:8]
+        if can_companies else [],
         "recent": Interaction.objects.filter(occurred_on__lte=today).select_related("company", "deal")
         .order_by("-occurred_on", "-id")[:8]
         if can_companies else [],

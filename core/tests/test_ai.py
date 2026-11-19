@@ -562,3 +562,38 @@ class FundingHistoryTests(TestCase):
         added = RoundParticipant.objects.get(deal=deal, co_investor__name="MedCorp AG")
         self.assertEqual(added.status, "contacted")
         self.assertEqual(CoInvestor.objects.filter(name="MedCorp AG").count(), 1)
+
+    def test_settled_suggestions_move_to_the_bottom(self):
+        verified_client(self.client, self.user)
+        url = f"/companies/{self.company.pk}/"
+        s = self.past_round()
+        html = self.client.get(url).content.decode()
+        self.assertLess(html.index("Suggestions from Claude"), html.index("Funding history"))
+        decide(s, self.user, accept=True)
+        html = self.client.get(url).content.decode()
+        self.assertGreater(html.index("Suggestions from Claude"), html.index("<h2>Contacts"))
+        self.assertIn("Search the web", html)                         # still available, at the bottom
+        deal = Deal.objects.create(company=self.company)
+        html = self.client.get(f"/deals/{deal.pk}/").content.decode()
+        self.assertGreater(html.index("Suggestions from Claude"), html.index("<h2>Round"))
+
+    def test_home_lists_recent_rounds(self):
+        decide(self.past_round(), self.user, accept=True)
+        verified_client(self.client, self.user)
+        home = self.client.get("/").content.decode()
+        recent = home.split("Recent financing rounds")[1].split("</section>")[0]
+        for text in ["CardioSense SA", "Series B", "CHF 8M", "Jun 2025", "Alpine Health Ventures"]:
+            self.assertIn(text, recent)
+
+    def test_old_round_news_items_are_removed(self):
+        import importlib
+
+        from django.apps import apps
+
+        s = self.past_round()
+        Suggestion.objects.filter(pk=s.pk).update(status="accepted")
+        Interaction.objects.create(company=self.company, kind="news", summary=s.label, occurred_on=date(2025, 6, 1))
+        keep = Interaction.objects.create(company=self.company, kind="news", summary="CE mark obtained",
+                                          occurred_on=date(2026, 3, 1))
+        importlib.import_module("core.migrations.0008_remove_round_news_duplicates").forwards(apps, None)
+        self.assertEqual(list(Interaction.objects.all()), [keep])
