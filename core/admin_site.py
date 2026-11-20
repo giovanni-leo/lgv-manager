@@ -7,7 +7,7 @@ from two_factor.admin import AdminSiteOTPRequiredMixin
 # Most used first; models not listed follow in alphabetical order.
 MODEL_ORDER = [
     "Company", "Deal", "Investment", "Realization", "Valuation", "CompanyMetric", "Milestone",
-    "Interaction", "Document", "Contact", "FundingRound", "CoInvestor", "RoundParticipant", "ShareClass", "ShareEvent", "OptionPool",
+    "Interaction", "Document", "DocumentFolder", "Contact", "FundingRound", "CoInvestor", "RoundParticipant", "ShareClass", "ShareEvent", "OptionPool",
     "ConvertibleTerms", "InvestingEntity", "FxRate", "InboundEmail", "Suggestion", "AiJob",
 ]
 APP_ORDER = ["core", "auth", "auditlog", "otp_totp", "otp_static"]

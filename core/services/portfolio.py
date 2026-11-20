@@ -16,7 +16,8 @@ from .ownership import ownership_by_class, ownership_company
 RUNWAY_WARNING_MONTHS = Decimal(12)
 RUNWAY_CRITICAL_MONTHS = Decimal(6)
 DAYS_PER_MONTH = Decimal("30.4375")
-REPORT_DOCUMENT_CATEGORIES = ["investor_report", "financials", "board_minutes", "general_assembly", "cap_table"]
+REPORT_DOCUMENT_CATEGORIES = ["investor_report", "financials", "board_minutes", "board_material", "general_assembly",
+                              "cap_table"]
 
 
 # --- IRR ----------------------------------------------------------------------

@@ -1,0 +1,52 @@
+{% extends "base.html" %}{% load i18n vc %}
+{% block title %}{% translate "Documents" %} · {{ SITE_NAME }}{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1>{% translate "Documents" %}</h1>
+  {% if perms.core.add_document %}<div class="head-actions"><a class="btn" href="{% admin_add 'document' %}">{% translate "Upload" %}</a>
+    <a class="btn" href="{% admin_add 'documentfolder' %}">{% translate "New folder" %}</a></div>{% endif %}
+</div>
+
+<form class="card doc-search" method="get">
+  <input type="search" name="q" value="{{ q }}" placeholder="{% translate 'Search inside all documents…' %}" autofocus>
+  <select name="company"><option value="">{% translate "All companies" %}</option>
+    {% for c in companies %}<option value="{{ c.pk }}" {% if selected.company == c.pk|stringformat:"s" %}selected{% endif %}>{{ c.name }}</option>{% endfor %}</select>
+  <select name="category"><option value="">{% translate "All categories" %}</option>
+    {% for value, label in categories %}<option value="{{ value }}" {% if selected.category == value %}selected{% endif %}>{{ label }}</option>{% endfor %}</select>
+  <select name="folder"><option value="">{% translate "All folders" %}</option>
+    {% for f in folders %}<option value="{{ f.pk }}" {% if selected.folder == f.pk|stringformat:"s" %}selected{% endif %}>{{ f.company.name }} / {{ f.name }}</option>{% endfor %}</select>
+  <select name="year"><option value="">{% translate "Any year" %}</option>
+    {% for y in years %}<option value="{{ y }}" {% if selected.year == y|stringformat:"s" %}selected{% endif %}>{{ y }}</option>{% endfor %}</select>
+  <button class="btn primary" type="submit">{% translate "Search" %}</button>
+  {% if q or selected.company or selected.category or selected.folder or selected.year %}<a class="btn subtle" href="{% url 'documents' %}">{% translate "Clear" %}</a>{% endif %}
+</form>
+
+<p class="muted small">{% blocktranslate count n=total %}{{ n }} document{% plural %}{{ n }} documents{% endblocktranslate %}</p>
+
+<section class="card">
+  <ul class="doc-results">
+    {% for d in page %}
+    <li>
+      <div class="doc-line">
+        <a href="{{ d.file.url }}" target="_blank" rel="noopener"><strong>{{ d.title }}</strong></a>
+        <span class="muted">{{ d.get_category_display }}{% if d.document_date %} · {{ d.document_date|date:"Y-m-d" }}{% endif %}</span>
+      </div>
+      <div class="muted small">
+        {% if d.company %}<a href="{% url 'company_detail' d.company.pk %}">{{ d.company.name }}</a>{% endif %}
+        {% if d.folder %} · 📁 <a href="?company={{ d.company_id }}&folder={{ d.folder_id }}">{{ d.folder.name }}</a>{% endif %}
+        · {{ d.original_filename }}
+        {% if perms.core.change_document %}· <a href="{% admin_change 'document' d.pk %}">{% translate "edit" %}</a>{% endif %}
+      </div>
+      {% if d.snippet %}<div class="snippet">{{ d.snippet }}</div>{% endif %}
+    </li>
+    {% empty %}<li class="muted">{% if q %}{% translate "Nothing found. Scanned PDFs (images) cannot be searched inside; their title and file name can." %}{% else %}{% translate "No documents yet." %}{% endif %}</li>{% endfor %}
+  </ul>
+  {% if page.paginator.num_pages > 1 %}
+  <p class="pager">
+    {% if page.has_previous %}<a class="btn small" href="?{{ querystring }}&page={{ page.previous_page_number }}">← {% translate "Previous" %}</a>{% endif %}
+    <span class="muted small">{{ page.number }} / {{ page.paginator.num_pages }}</span>
+    {% if page.has_next %}<a class="btn small" href="?{{ querystring }}&page={{ page.next_page_number }}">{% translate "Next" %} →</a>{% endif %}
+  </p>
+  {% endif %}
+</section>
+{% endblock %}

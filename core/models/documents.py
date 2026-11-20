@@ -27,9 +27,32 @@ def document_storage_key(instance, filename):
 
 
 DOCUMENT_CATEGORIES = [
-    "pitch_deck", "term_sheet", "shareholders_agreement", "subscription", "board_minutes",
-    "financials", "investor_report", "general_assembly", "cap_table", "regulatory", "legal", "other",
+    "pitch_deck", "term_sheet", "shareholders_agreement", "subscription", "board_minutes", "board_material",
+    "financials", "investor_report", "general_assembly", "cap_table", "charter", "regulatory", "legal", "other",
 ]
+
+
+class DocumentFolder(models.Model):
+    """A group of documents of one company that belong together, e.g. all the papers of the Series B."""
+
+    company = models.ForeignKey(Company, on_delete=models.CASCADE, related_name="document_folders",
+                                verbose_name=_("company"))
+    name = models.TextField(_("name"), help_text=_("e.g. Series B, Board 2026-03, Annual report 2025"))
+    notes = models.TextField(_("notes"), blank=True, null=True)
+    created_at = models.DateTimeField(_("created at"), default=timezone.now, db_default=Now(), editable=False)
+
+    class Meta:
+        db_table = "document_folders"
+        ordering = ["company", "-created_at"]
+        verbose_name = _("document folder")
+        verbose_name_plural = _("document folders")
+        constraints = [
+            models.UniqueConstraint(fields=["company", "name"], name="document_folders_name_key"),
+            models.CheckConstraint(condition=~Q(name=""), name="document_folders_name_check"),
+        ]
+
+    def __str__(self):
+        return f"{self.company} / {self.name}"
 
 
 class Document(models.Model):
@@ -39,10 +62,12 @@ class Document(models.Model):
         SHAREHOLDERS_AGREEMENT = "shareholders_agreement", _("Shareholders' agreement")
         SUBSCRIPTION = "subscription", _("Subscription agreement")
         BOARD_MINUTES = "board_minutes", _("Board minutes")
+        BOARD_MATERIAL = "board_material", _("Board material")
         FINANCIALS = "financials", _("Financial statements")
         INVESTOR_REPORT = "investor_report", _("Investor report")
         GENERAL_ASSEMBLY = "general_assembly", _("General assembly minutes")
         CAP_TABLE = "cap_table", _("Cap table")
+        CHARTER = "charter", _("Charter / certificate of incorporation")
         REGULATORY = "regulatory", _("Regulatory")
         LEGAL = "legal", _("Legal")
         OTHER = "other", _("Other")
@@ -51,6 +76,8 @@ class Document(models.Model):
                                 related_name="documents", verbose_name=_("company"))
     deal = models.ForeignKey(Deal, on_delete=models.CASCADE, null=True, blank=True,
                              related_name="documents", verbose_name=_("deal"))
+    folder = models.ForeignKey(DocumentFolder, on_delete=models.SET_NULL, null=True, blank=True,
+                               related_name="documents", verbose_name=_("folder"))
     category = models.TextField(_("category"), choices=Category.choices,
                                 default=Category.OTHER, db_default=Category.OTHER)
     title = models.TextField(_("title"))
@@ -116,6 +143,12 @@ class Document(models.Model):
                               or mimetypes.guess_type(upload.name)[0])
             if not self.title:
                 self.title = PurePath(upload.name).stem
+            if self.extracted_text is None:
+                from core.services.doc_text import extract_text
+
+                upload.seek(0)
+                self.extracted_text = extract_text(upload.read(), self.original_filename, self.mime_type)
+                upload.seek(0)
         super().save(*args, **kwargs)
 
 

@@ -1,10 +1,22 @@
 {% load i18n vc %}<section class="card">
   <header><h2>{% translate "Documents" %}</h2>
+    {% if documents_count %}<a class="btn small subtle" href="{% url 'documents' %}?company={{ company.pk }}">{% translate "All" %} ({{ documents_count }})</a>{% endif %}
     {% if perms.core.add_document %}<a class="btn small" href="{% admin_add 'document' company=company.pk deal=deal.pk %}">{% translate "Upload" %}</a>{% endif %}</header>
+  {% for folder in document_folders %}
+  <details class="doc-folder"{% if forloop.first %} open{% endif %}>
+    <summary><strong>📁 {{ folder.name }}</strong> <span class="muted small">{{ folder.documents.all|length }}</span></summary>
+    <ul class="docs">
+      {% for d in folder.documents.all %}
+      <li><a href="{{ d.file.url }}" target="_blank" rel="noopener">{{ d.title }}</a> <a class="muted small" href="{% admin_change 'document' d.pk %}">{% translate "edit" %}</a>
+        <span class="muted">{{ d.get_category_display }}{% if d.document_date %} · {{ d.document_date|date:"Y-m-d" }}{% endif %}</span></li>
+      {% empty %}<li class="muted">{% translate "Empty folder." %}</li>{% endfor %}
+    </ul>
+  </details>
+  {% endfor %}
   <ul class="docs">
     {% for d in documents %}
     <li><a href="{{ d.file.url }}" target="_blank" rel="noopener">{{ d.title }}</a> <a class="muted small" href="{% admin_change 'document' d.pk %}">{% translate "edit" %}</a>
       <span class="muted">{{ d.get_category_display }}{% if d.document_date %} · {{ d.document_date|date:"Y-m-d" }}{% endif %}</span></li>
-    {% empty %}<li class="muted">{% translate "No documents yet." %}</li>{% endfor %}
+    {% empty %}{% if not document_folders %}<li class="muted">{% translate "No documents yet." %}</li>{% endif %}{% endfor %}
   </ul>
 </section>

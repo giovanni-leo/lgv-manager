@@ -15,7 +15,7 @@ from django.utils.html import format_html, format_html_join
 from django.utils.translation import gettext_lazy as _
 
 from .models import (AiJob, CoInvestor, FundingRound, FundingRoundInvestor, InboundEmail, Suggestion, Company, CompanyMetric, Contact, RoundParticipant, ConvertibleTerms, Deal, DealStageHistory,
-                     Document, DocumentLink, FxRate, InvestingEntity, Investment, Interaction,
+                     Document, DocumentFolder, DocumentLink, FxRate, InvestingEntity, Investment, Interaction,
                      Milestone, OptionPool, Realization, ShareClass, ShareEvent, Valuation)
 from . import admin_users  # noqa: F401  (registers the simplified user admin)
 from .services.ownership import ownership_by_class, ownership_company
@@ -356,10 +356,18 @@ class DocumentAdmin(ModelAdmin):
     list_display = ["title", "company", "category", "document_date"]
     list_filter = ["category"]
     search_fields = ["title", "original_filename", "company__name"]
-    autocomplete_fields = ["company", "deal"]
+    autocomplete_fields = ["company", "deal", "folder"]
     readonly_fields = ["original_filename", "mime_type", "size_bytes", "sha256", "uploaded_at"]
-    essential = ["title", "file", "company", "category", "document_date"]
+    essential = ["title", "file", "company", "folder", "category", "document_date"]
     inlines = [DocumentLinkInline]
+
+
+@admin.register(DocumentFolder)
+class DocumentFolderAdmin(ModelAdmin):
+    list_display = ["name", "company", "created_at"]
+    search_fields = ["name", "company__name"]
+    autocomplete_fields = ["company"]
+    essential = ["company", "name"]
 
 
 @admin.register(Contact)

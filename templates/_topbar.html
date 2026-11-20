@@ -6,6 +6,7 @@
     <a href="{{ home_url }}" {% if request.path == home_url %}aria-current="page"{% endif %}>{% translate "Home" %}</a>
     {% if perms.core.view_deal %}<a href="{{ pipeline_url }}" {% if request.path == pipeline_url or nav_section == "pipeline" %}aria-current="page"{% endif %}>{% translate "Pipeline" %}</a>{% endif %}
     {% if perms.core.view_company %}<a href="{{ portfolio_url }}" {% if request.path == portfolio_url or nav_section == "portfolio" %}aria-current="page"{% endif %}>{% translate "Portfolio" %}</a>{% endif %}
+    {% if perms.core.view_document %}{% url 'documents' as documents_url %}<a href="{{ documents_url }}" {% if request.path == documents_url %}aria-current="page"{% endif %}>{% translate "Documents" %}</a>{% endif %}
     {% if perms.core.view_inboundemail %}{% url 'inbox' as inbox_url %}<a href="{{ inbox_url }}" {% if request.path == inbox_url %}aria-current="page"{% endif %}>{% translate "Inbox" %}</a>{% endif %}
     <a href="{% url 'admin:index' %}" {% if request.path|slice:":7" == "/admin/" %}aria-current="page"{% endif %}>{% translate "Data" %}</a>
     {% if USER_MANUAL_URL %}<a href="{{ USER_MANUAL_URL }}" target="_blank" rel="noopener">{% translate "Manual" %}</a>

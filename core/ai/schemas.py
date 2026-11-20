@@ -9,8 +9,8 @@ InvestorKind = Literal["vc", "strategic", "angel", "family_office", "public", "o
 CompanyField = Literal["legal_name", "website", "sector", "city", "country", "description"]
 DealField = Literal["round_name", "round_size", "pre_money", "proposed_ticket", "currency", "deadline", "next_step"]
 DocumentCategory = Literal["pitch_deck", "term_sheet", "shareholders_agreement", "subscription", "board_minutes",
-                           "financials", "investor_report", "general_assembly", "cap_table", "regulatory", "legal",
-                           "other"]
+                           "board_material", "financials", "investor_report", "general_assembly", "cap_table",
+                           "charter", "regulatory", "legal", "other"]
 
 
 class CompanyFact(BaseModel):

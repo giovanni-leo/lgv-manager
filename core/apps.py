@@ -5,7 +5,7 @@ from django.utils.translation import gettext_lazy as _
 AUDITED_MODELS = [
     "InvestingEntity", "Company", "Contact", "Deal", "ShareClass", "ShareEvent", "OptionPool",
     "Investment", "ConvertibleTerms", "Realization", "Valuation", "CompanyMetric", "Milestone",
-    "Interaction", "Document", "DocumentLink", "FxRate", "CoInvestor", "RoundParticipant", "FundingRound",
+    "Interaction", "Document", "DocumentFolder", "DocumentLink", "FxRate", "CoInvestor", "RoundParticipant", "FundingRound",
 ]
 
 

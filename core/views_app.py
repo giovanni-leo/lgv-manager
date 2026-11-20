@@ -7,7 +7,7 @@ from django.conf import settings
 from django.contrib.auth.decorators import permission_required
 from django.core.exceptions import PermissionDenied
 from django.db import transaction
-from django.db.models import Q
+from django.db.models import Prefetch, Q
 from django.http import Http404, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
@@ -75,6 +75,12 @@ class NewDealForm(forms.Form):
 
 # --- Context builders -----------------------------------------------------------
 
+def _folders(company):
+    """The company's document folders, each with its documents (newest first)."""
+    docs = Prefetch("documents", queryset=Document.objects.order_by("-document_date", "-uploaded_at"))
+    return list(company.document_folders.prefetch_related(docs))
+
+
 def _deal_contacts(deal, participants):
     seen, rows = set(), []
 
@@ -106,8 +112,10 @@ def deal_context(request, deal):
         "existing_investors": [k for k in known_investors(deal.company)
                                if k.investor.pk not in {p.co_investor_id for p in ds.participants}],
         "events": timeline(deal=deal),
-        "documents": Document.objects.filter(Q(deal=deal) | Q(company=deal.company)).order_by(
+        "documents": Document.objects.filter(Q(deal=deal) | Q(company=deal.company), folder__isnull=True).order_by(
             "-document_date", "-uploaded_at")[:15],
+        "document_folders": _folders(deal.company),
+        "documents_count": deal.company.documents.count(),
         "history": deal.stage_history.all(),
         "participant_form": ParticipantForm(),
         "co_investor_names": CoInvestor.objects.values_list("name", flat=True),
@@ -151,7 +159,8 @@ def company_context(request, company):
         "contacts": [{"contact": c, "label": ""} for c in company.contacts.all()],
         "funding_rounds": funding_rounds,
         "investors": known_investors(company),
-        "documents": company.documents.order_by("-document_date", "-uploaded_at")[:15],
+        "documents": company.documents.filter(folder__isnull=True).order_by("-document_date", "-uploaded_at")[:15],
+        "document_folders": _folders(company),
         "metrics": company.metrics.order_by("-as_of")[:4],
         "interaction_form": InteractionForm(initial={"occurred_on": timezone.localdate(), "kind": "note"}),
         "interaction_target": {"company": company.pk},
