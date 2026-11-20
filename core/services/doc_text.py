@@ -1,6 +1,6 @@
 """Plain text of uploaded documents, for full-text search.
 
-PDF and Word files are read; scanned PDFs (images only) give no text and are left empty.
+PDF, Word and Excel (.xlsx) files are read; scanned PDFs (images only) give no text and are left empty.
 A broken or unreadable file never blocks the upload.
 """
 
@@ -41,6 +41,35 @@ def _docx(data):
     return "\n".join(parts)
 
 
+def _xlsx(data):
+    """Every sheet as lines of cells joined by " | " (values, not formulas)."""
+    from openpyxl import load_workbook
+
+    book = load_workbook(io.BytesIO(data), data_only=True, read_only=True)
+    parts, size = [], 0
+    for sheet in book.worksheets:
+        parts.append(f"== Sheet: {sheet.title} ==")
+        for row in sheet.iter_rows(values_only=True):
+            cells = [_cell(v) for v in row]
+            if any(cells):
+                line = " | ".join(cells).rstrip(" |")
+                parts.append(line)
+                size += len(line)
+            if size > MAX_CHARS:
+                break
+    return "\n".join(parts)
+
+
+def _cell(value):
+    if value is None:
+        return ""
+    if isinstance(value, float):
+        return f"{value:.6f}".rstrip("0").rstrip(".")
+    if hasattr(value, "date") and hasattr(value, "hour"):          # datetime
+        return value.date().isoformat() if not (value.hour or value.minute) else value.isoformat(" ", "minutes")
+    return str(value).strip()
+
+
 def extract_text(data, filename="", mime_type=None, compact=True):
     """Text of the file, or None when there is none or the type is not readable.
 
@@ -55,6 +84,8 @@ def extract_text(data, filename="", mime_type=None, compact=True):
             text = _pdf(data)
         elif suffix == ".docx" or "wordprocessingml" in mime:
             text = _docx(data)
+        elif suffix in {".xlsx", ".xlsm"} or "spreadsheetml" in mime:
+            text = _xlsx(data)
         elif suffix in {".txt", ".md", ".csv"} or mime.startswith("text/plain"):
             text = data.decode("utf-8", errors="replace")
         else:

@@ -108,7 +108,7 @@ What happens next:
 
 An email from a portfolio company with a report or a convocation does not open a new deal; one about a financing round does.
 
-Tips: one company per email; put its name in the subject; send documents as PDF (Word files are saved but not read). Emails forwarded from founders or other investors work too.
+Tips: one company per email; put its name in the subject; send documents as PDF, Word (.docx) or Excel (.xlsx) (older .doc and .xls files are saved but not read). Emails forwarded from founders or other investors work too.
 
 ## 7. Recording a financing round (and the cap table)
 

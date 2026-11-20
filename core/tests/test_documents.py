@@ -145,3 +145,55 @@ class DocumentsPageTests(TestCase):
         assign_role(outsider, "viewer")
         verified_client(self.client, outsider)
         self.assertEqual(self.client.get("/documents/").status_code, 200)
+
+
+def tiny_xlsx():
+    import io
+
+    from openpyxl import Workbook
+
+    book = Workbook()
+    sheet = book.active
+    sheet.title = "Summary Cap Table"
+    sheet.append(["Class", "Shares", "Price"])
+    sheet.append(["Series B-1 Preferred", 17855941, 1.7788])
+    sheet.append([])
+    sheet.append(["Date", None, None])
+    book.create_sheet("Investors").append(["Efficient Frontier Holding SA", 337307, 600000])
+    buffer = io.BytesIO()
+    book.save(buffer)
+    return buffer.getvalue()
+
+
+class SpreadsheetTests(TestCase):
+    def test_excel_text_is_extracted(self):
+        text = extract_text(tiny_xlsx(), "cap.xlsx")
+        self.assertIn("== Sheet: Summary Cap Table ==", text)
+        self.assertIn("Series B-1 Preferred 17855941 1.7788", text.replace(" | ", " "))
+        self.assertIn("Efficient Frontier Holding SA | 337307 | 600000", extract_text(tiny_xlsx(), "cap.xlsx", compact=False))
+        self.assertIsNone(extract_text(b"not a workbook", "broken.xlsx"))
+
+    def test_excel_is_searchable_and_readable_for_the_cap_table(self):
+        from core.ai import claude
+
+        co = Company.objects.create(name="AdvNanoT")
+        doc = make_document(co, "cap.xlsx", tiny_xlsx(), title="Pro forma cap table")
+        self.assertIn("17855941", doc.extracted_text)
+        blocks, notes = claude._document_blocks([{"title": doc.title, "filename": "cap.xlsx",
+                                                  "mime_type": doc.mime_type, "data": tiny_xlsx()}])
+        self.assertEqual(notes, [])
+        self.assertIn("Series B-1 Preferred | 17855941 | 1.7788", blocks[0]["text"])
+        mail_blocks, mail_notes = claude._attachment_blocks([{"filename": "cap.xlsx", "mime_type": doc.mime_type,
+                                                              "data": tiny_xlsx()}])
+        self.assertEqual(mail_notes, [])
+        self.assertIn("17855941", mail_blocks[0]["source"]["data"])
+
+    def test_unreadable_type_is_named_in_the_message(self):
+        from core.ai import claude
+
+        with self.assertRaisesMessage(claude.AiError, "(.zip:"):
+            from unittest import mock
+
+            with mock.patch.object(claude, "get_client"):
+                claude.read_cap_table("X", [], [{"title": "Archive", "filename": "a.zip",
+                                                 "mime_type": "application/zip", "data": b"PK"}])
