@@ -15,7 +15,8 @@ from .models import AiJob, Company, Deal, InboundEmail, Suggestion
 
 
 # Most decision-relevant first.
-TARGET_ORDER = ["deal_field", "participant", "deal_note", "past_round", "company_field", "contact", "news"]
+TARGET_ORDER = ["deal_field", "participant", "deal_note", "event", "figures", "past_round", "company_field", "contact",
+                "news"]
 
 
 def suggestions_context(company, deal=None, error=None):

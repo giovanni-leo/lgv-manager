@@ -348,7 +348,8 @@ def home(request):
             r = runway(c)
             if r and r.level in ("warning", "critical"):
                 alerts.append({"company": c, "runway": r})
-        assemblies = Interaction.objects.filter(kind="general_assembly", occurred_on__gte=today).select_related(
+        assemblies = Interaction.objects.filter(kind__in=["general_assembly", "board", "meeting"],
+                                                occurred_on__gte=today).select_related(
             "company").order_by("occurred_on")[:10]
     return render(request, "core/home.html", {
         "deadlines": deadlines, "alerts": alerts, "assemblies": assemblies,

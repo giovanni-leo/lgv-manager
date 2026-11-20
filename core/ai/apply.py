@@ -8,7 +8,8 @@ from django.conf import settings
 from django.db import transaction
 from django.utils import timezone
 
-from core.models import CoInvestor, Contact, Interaction, RoundParticipant, Suggestion, Valuation
+from core.models import (CoInvestor, CompanyMetric, Contact, Interaction, RoundParticipant, Suggestion,
+                         Valuation)
 
 COMPANY_FIELDS = {"legal_name", "website", "sector", "city", "country", "description"}
 DEAL_MONEY_FIELDS = {"round_size", "pre_money", "proposed_ticket"}
@@ -154,6 +155,52 @@ def _news(s):
                                kind="news", summary=p["headline"], details=details or None)
 
 
+EVENT_KINDS = {"general_assembly": "general_assembly", "board": "board", "meeting": "meeting"}
+EVENT_NAMES = {"general_assembly": "General assembly", "board": "Board meeting", "meeting": "Meeting"}
+
+
+def _whole_number(value):
+    if value in (None, ""):
+        return None
+    try:
+        return int(float(value))
+    except (TypeError, ValueError):
+        raise SuggestionError(f"'{value}' is not a whole number.") from None
+
+
+def _event(s):
+    """An announced meeting becomes a dated entry in Activity and events (shown in Home while it is ahead)."""
+    p = s.payload
+    when = parse_date(p.get("date"))
+    if when is None:
+        raise SuggestionError("The event has no valid date.")
+    kind = EVENT_KINDS.get(p.get("kind"), "meeting")
+    if Interaction.objects.filter(company=s.company, kind=kind, occurred_on=when).exists():
+        return  # already recorded
+    place = ", ".join(x for x in (p.get("time"), p.get("location")) if x)
+    title = p.get("title") or EVENT_NAMES[kind]
+    details = "\n".join(x for x in (f"Agenda: {p['agenda']}" if p.get("agenda") else None,
+                                    f"Source: {s.source_url}" if s.source_url else None) if x)
+    Interaction.objects.create(company=s.company, occurred_on=when, kind=kind,
+                               summary=f"{title}{' – ' + place if place else ''}"[:500], details=details or None)
+
+
+def _figures(s):
+    """Report figures fill the company's figures for that date; values already there are kept."""
+    p = s.payload
+    when = parse_date(p.get("as_of"))
+    if when is None:
+        raise SuggestionError("The figures have no valid date.")
+    metric, _created = CompanyMetric.objects.get_or_create(
+        company=s.company, as_of=when, defaults={"currency": parse_currency(p.get("currency"), "CHF")})
+    for field, parser in (("cash", parse_amount), ("monthly_burn", parse_amount), ("revenue_ttm", parse_amount),
+                          ("headcount", _whole_number)):
+        value = parser(p.get(field))
+        if value is not None and getattr(metric, field) is None:
+            setattr(metric, field, value)
+    metric.save()
+
+
 HANDLERS = {
     Suggestion.Target.COMPANY_FIELD: _company_field,
     Suggestion.Target.DEAL_FIELD: _deal_field,
@@ -162,6 +209,8 @@ HANDLERS = {
     Suggestion.Target.CONTACT: _contact,
     Suggestion.Target.PAST_ROUND: _past_round,
     Suggestion.Target.NEWS: _news,
+    Suggestion.Target.EVENT: _event,
+    Suggestion.Target.FIGURES: _figures,
 }
 
 

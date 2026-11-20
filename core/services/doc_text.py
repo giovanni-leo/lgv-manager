@@ -56,8 +56,8 @@ def extract_text(data, filename="", mime_type=None):
             text = data.decode("utf-8", errors="replace")
         else:
             return None
-    except Exception:  # noqa: BLE001 - damaged files are common; the document is still saved
-        log.warning("Could not read the text of %s", filename, exc_info=True)
+    except Exception as exc:  # noqa: BLE001 - damaged files are common; the document is still saved
+        log.warning("Could not read the text of %s: %s", filename, exc)
         return None
     text = text.replace("\x00", " ")
     text = " ".join(text.split())      # one line: search does not need the layout

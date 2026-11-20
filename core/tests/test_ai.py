@@ -15,9 +15,10 @@ from django.test import TestCase, override_settings
 
 from core.ai import claude, jobs, mail
 from core.ai.apply import SuggestionError, decide
-from core.ai.schemas import (AttachmentInfo, CompanyFact, CompanyResearch, DealFact, EmailExtraction, InvestorRef,
+from core.ai.schemas import (AttachmentInfo, CompanyFact, CompanyResearch, DealFact, EmailExtraction, EventInfo,
+                             InvestorRef, ReportFigures,
                              NewsItem, PastRound, Person, RoundInvestor)
-from core.models import (AiJob, CoInvestor, Company, Contact, Deal, Document, InboundEmail, Interaction,
+from core.models import (AiJob, CoInvestor, Company, CompanyMetric, Contact, Deal, Document, InboundEmail, Interaction,
                          RoundParticipant, Suggestion, Valuation)
 from core.roles import assign_role
 
@@ -109,7 +110,7 @@ def make_eml(sender="anna@lakegrowth.example", subject="CardioSense Series C", f
     return msg.as_bytes()
 
 
-def email_result(company_name="CardioSense"):
+def email_result(company_name="CardioSense", **extra):
     return EmailExtraction(
         company_name=company_name, company_website="https://www.cardiosense.example",
         company_facts=[CompanyFact(field="city", value="Lausanne", source_url=None, evidence="Signature",
@@ -127,8 +128,10 @@ def email_result(company_name="CardioSense"):
                        email=None, phone=None, profile_url=None, source_url=None, confidence="high")],
         key_terms="Series C preferred\n1x non-participating liquidation preference",
         attachments=[AttachmentInfo(filename="deck.pdf", category="pitch_deck", title="CardioSense Series C deck",
-                                    document_date="2026-11-01")],
+                                    document_date="2026-11-01", folder="Series C")],
+        events=[], report_figures=[],
         summary="CardioSense raises a CHF 12M Series C.",
+        **extra,
     )
 
 
@@ -647,3 +650,94 @@ class NoAutomaticResearchTests(TestCase):
             jobs.run_job(jobs.claim_next_job())
         self.assertEqual(Company.objects.get(name="OrthoFlex SA").deals.count(), 1)
         self.assertFalse(AiJob.objects.filter(kind="web_research").exists())
+
+
+@AI_ON
+class EmailEventsAndFiguresTests(TestCase):
+    """Convocations, board dates and report figures arriving by email."""
+
+    def setUp(self):
+        self.company = Company.objects.create(name="CardioSense SA", status="portfolio")
+        self.user = User.objects.create_superuser("g", "g@example.com", "a-long-test-password")
+
+    def process(self, result):
+        mail.ingest_raw(make_eml(subject="CardioSense AGM invitation"))
+        with mock.patch.object(claude, "extract_email", return_value=(result, claude.Usage(), [])):
+            jobs.run_job(jobs.claim_next_job())
+
+    def result(self, **kw):
+        base = email_result("CardioSense").model_dump()
+        base.update(deal_facts=[], round_investors=[], key_terms=None, **kw)
+        return EmailExtraction(**base)
+
+    def test_portfolio_company_report_creates_no_deal(self):
+        self.process(self.result())
+        self.assertFalse(Deal.objects.exists())
+        doc = Document.objects.get()
+        self.assertEqual((doc.company, doc.deal, doc.folder.name), (self.company, None, "Series C"))
+        self.assertEqual(Interaction.objects.get().kind, "email")
+
+    def test_round_email_from_a_portfolio_company_creates_a_deal(self):
+        mail.ingest_raw(make_eml())
+        with mock.patch.object(claude, "extract_email", return_value=(email_result("CardioSense"), claude.Usage(), [])):
+            jobs.run_job(jobs.claim_next_job())
+        self.assertEqual(Deal.objects.get().company, self.company)
+
+    def test_event_becomes_a_future_interaction_after_accepting(self):
+        event = EventInfo(kind="general_assembly", date="2027-06-12", time="14:00", location="Geneva",
+                          title="Ordinary general assembly 2027", agenda="Accounts, discharge", evidence="Invitation")
+        self.process(self.result(events=[event], report_figures=[]))
+        s = Suggestion.objects.get(target="event")
+        self.assertIn("2027-06-12 General assembly, 14:00, Geneva", s.label)
+        self.assertFalse(Interaction.objects.filter(kind="general_assembly").exists())   # nothing before Accept
+        decide(s, self.user, accept=True)
+        i = Interaction.objects.get(kind="general_assembly")
+        self.assertEqual(str(i.occurred_on), "2027-06-12")
+        self.assertIn("14:00, Geneva", i.summary)
+        self.assertIn("Accounts, discharge", i.details)
+        decide(Suggestion.objects.create(job=s.job, company=self.company, target="event", payload=s.payload,
+                                         label="again"), self.user, accept=True)
+        self.assertEqual(Interaction.objects.filter(kind="general_assembly").count(), 1)   # no duplicate
+
+    def test_known_events_are_not_proposed_again(self):
+        Interaction.objects.create(company=self.company, kind="board", occurred_on=date(2027, 3, 4), summary="Board")
+        event = EventInfo(kind="board", date="2027-03-04", time=None, location=None, title="Board", agenda=None,
+                          evidence=None)
+        self.process(self.result(events=[event], report_figures=[]))
+        self.assertFalse(Suggestion.objects.filter(target="event").exists())
+
+    def test_report_figures_fill_company_metrics(self):
+        figures = ReportFigures(as_of="2026-09-30", currency="USD", cash=4200000, monthly_burn=350000,
+                                revenue_ttm=None, headcount=42, evidence="Q3 report p.2")
+        self.process(self.result(events=[], report_figures=[figures]))
+        s = Suggestion.objects.get(target="figures")
+        self.assertEqual(s.label, "Figures as of 2026-09-30: cash USD 4.2M, burn/month USD 350k, 42 employees")
+        decide(s, self.user, accept=True)
+        m = self.company.metrics.get()
+        self.assertEqual((m.cash, m.monthly_burn, m.revenue_ttm, m.headcount, m.currency),
+                         (Decimal("4200000.00"), Decimal("350000.00"), None, 42, "USD"))
+
+    def test_existing_figures_are_kept(self):
+        CompanyMetric.objects.create(company=self.company, as_of=date(2026, 9, 30), cash=Decimal(1), currency="USD")
+        s = Suggestion.objects.create(
+            job=AiJob.objects.create(kind="email", company=self.company), company=self.company, target="figures",
+            payload={"as_of": "2026-09-30", "currency": "USD", "cash": 999, "monthly_burn": 5, "headcount": 7},
+            label="x")
+        decide(s, self.user, accept=True)
+        m = self.company.metrics.get()
+        self.assertEqual((m.cash, m.monthly_burn, m.headcount), (Decimal("1.00"), Decimal("5.00"), 7))
+
+    def test_bad_date_is_refused(self):
+        s = Suggestion.objects.create(
+            job=AiJob.objects.create(kind="email", company=self.company), company=self.company, target="event",
+            payload={"kind": "board", "date": "soon", "title": "Board"}, label="x")
+        with self.assertRaises(SuggestionError):
+            decide(s, self.user, accept=True)
+
+    def test_home_lists_upcoming_board_and_assemblies(self):
+        Interaction.objects.create(company=self.company, kind="board", occurred_on=date(2099, 3, 4),
+                                   summary="Board meeting – 10:00, Zurich")
+        verified_client(self.client, self.user)
+        page = self.client.get("/")
+        self.assertContains(page, "Upcoming assemblies and meetings")
+        self.assertContains(page, "Board meeting – 10:00, Zurich")

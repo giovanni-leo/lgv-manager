@@ -12,11 +12,11 @@ from django.db import transaction
 from django.db.models import Q
 from django.utils import timezone
 
-from core.models import (AiJob, Company, Contact, Deal, DealStage, Document, InboundEmail, Interaction,
-                         Suggestion)
+from core.models import (AiJob, Company, Contact, Deal, DealStage, Document, DocumentFolder, InboundEmail,
+                         Interaction, Suggestion)
 
 from . import claude, mail
-from .apply import parse_date
+from .apply import SuggestionError, parse_date
 
 log = logging.getLogger(__name__)
 OPEN_STAGES = ["sourced", "first_meeting", "analysis", "due_diligence", "term_sheet", "on_hold"]
@@ -205,17 +205,30 @@ def match_company(name, website):
     return None
 
 
+def _folder(company, name):
+    """The company's folder with this name (any capitalisation), created if needed."""
+    name = " ".join((name or "").split())[:100]
+    if not name:
+        return None
+    folder = company.document_folders.filter(name__iexact=name).first()
+    return folder or DocumentFolder.objects.create(company=company, name=name)
+
+
 def _save_attachments(company, deal, attachments, infos):
     by_name = {i.filename: i for i in infos}
     saved = []
     for att in attachments:
         sha = hashlib.sha256(att["data"]).hexdigest()
+        info = by_name.get(att["filename"])
         existing = Document.objects.filter(sha256=sha, company=company).first()
         if existing:
+            if existing.folder_id is None and info and info.folder:
+                existing.folder = _folder(company, info.folder)
+                existing.save(update_fields=["folder"])
             saved.append(existing)
             continue
-        info = by_name.get(att["filename"])
-        doc = Document(company=company, deal=deal, category=info.category if info else "other",
+        doc = Document(company=company, deal=deal, folder=_folder(company, info.folder) if info else None,
+                       category=info.category if info else "other",
                        title=(info.title if info else att["filename"])[:300],
                        document_date=parse_date(info.document_date) if info and info.document_date else None,
                        notes="Received by email")
@@ -223,6 +236,41 @@ def _save_attachments(company, deal, attachments, infos):
         doc.save()
         saved.append(doc)
     return saved
+
+
+def _events_and_figures(job, company, deal, extraction):
+    """Announced meetings and report figures, as suggestions (events already recorded are skipped)."""
+    seen = set()
+    for e in extraction.events:
+        when = parse_date_or_none(e.date)
+        key = (e.kind, when)
+        if when is None or key in seen or company.interactions.filter(kind=e.kind, occurred_on=when).exists():
+            continue
+        seen.add(key)
+        label = f"{when} {EVENT_LABELS[e.kind]}" + (f", {e.time}" if e.time else "") \
+            + (f", {e.location}" if e.location else "")
+        _suggest(job, company, deal, Suggestion.Target.EVENT, e.model_dump(), label, None, e.evidence or e.agenda)
+    for f in extraction.report_figures:
+        when = parse_date_or_none(f.as_of)
+        if when is None or company.metrics.filter(as_of=when).exists():
+            continue
+        parts = [f"{name} {_fmt_amount(value, f.currency or 'CHF')}" for name, value in
+                 (("cash", f.cash), ("burn/month", f.monthly_burn), ("revenue TTM", f.revenue_ttm)) if value]
+        if f.headcount:
+            parts.append(f"{f.headcount} employees")
+        if parts:
+            _suggest(job, company, deal, Suggestion.Target.FIGURES, f.model_dump(),
+                     f"Figures as of {when}: " + ", ".join(parts), None, f.evidence)
+
+
+def parse_date_or_none(value):
+    try:
+        return parse_date(value)
+    except SuggestionError:
+        return None
+
+
+EVENT_LABELS = {"general_assembly": "General assembly", "board": "Board meeting", "meeting": "Meeting"}
 
 
 def run_email(job):
@@ -247,7 +295,9 @@ def run_email(job):
             company = Company.objects.create(name=extraction.company_name.strip(),
                                              website=extraction.company_website or None)
         deal = inbound.deal or company.deals.filter(stage__in=OPEN_STAGES).order_by("-opened_on", "-id").first()
-        if deal is None:
+        # A portfolio company sending a report or a convocation is not a new deal, unless the email is about a round.
+        about_a_round = bool(extraction.deal_facts or extraction.round_investors)
+        if deal is None and (company.status != Company.Status.PORTFOLIO or about_a_round):
             source = Contact.objects.filter(email__iexact=info["sender"]).first()
             deal = Deal.objects.create(company=company, stage=DealStage.SOURCED, source_contact=source,
                                        source_note=f"Email from {info['sender']}: {info['subject']}"[:500])
@@ -259,17 +309,18 @@ def run_email(job):
         job.company, job.deal = company, deal
 
         _company_facts(job, company, deal, extraction.company_facts)
-        for f in extraction.deal_facts:
+        for f in extraction.deal_facts if deal else []:
             if _norm(getattr(deal, f.field, None)) == _norm(f.value):
                 continue
             _suggest(job, company, deal, Suggestion.Target.DEAL_FIELD, {"field": f.field, "value": f.value},
                      f"{FIELD_LABELS[f.field]}: {f.value}", None, f.evidence, f.confidence)
-        for r in extraction.round_investors:
+        for r in extraction.round_investors if deal else []:
             amount = f", {_fmt_amount(r.amount, r.currency or deal.currency)}" if r.amount else ""
             _suggest(job, company, deal, Suggestion.Target.PARTICIPANT, r.model_dump(),
                      f"{r.name} ({r.kind}) – {r.role.replace('_', '-')}, {r.status}{amount}", None, r.evidence)
         _people(job, company, deal, extraction.people, [r.name for r in extraction.round_investors])
-        if extraction.key_terms:
+        _events_and_figures(job, company, deal, extraction)
+        if extraction.key_terms and deal:
             _suggest(job, company, deal, Suggestion.Target.DEAL_NOTE,
                      {"heading": f"Key terms from email '{info['subject']}'", "text": extraction.key_terms},
                      "Key investment terms: " + extraction.key_terms.replace("\n", "; ")[:300])

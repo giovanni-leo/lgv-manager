@@ -88,6 +88,27 @@ class AttachmentInfo(BaseModel):
     category: DocumentCategory
     title: str
     document_date: str | None
+    folder: str | None                # groups documents that belong together, e.g. "Series B", "Board 2026-03"
+
+
+class EventInfo(BaseModel):
+    kind: Literal["general_assembly", "board", "meeting"]
+    date: str                         # YYYY-MM-DD
+    time: str | None                  # HH:MM, 24 hours
+    location: str | None              # city, address or video link
+    title: str
+    agenda: str | None                # short agenda, if given
+    evidence: str | None
+
+
+class ReportFigures(BaseModel):
+    as_of: str                        # YYYY-MM-DD, end of the period the figures refer to
+    currency: str | None
+    cash: float | None
+    monthly_burn: float | None
+    revenue_ttm: float | None
+    headcount: int | None
+    evidence: str | None
 
 
 class EmailExtraction(BaseModel):
@@ -99,4 +120,6 @@ class EmailExtraction(BaseModel):
     people: list[Person]
     key_terms: str | None
     attachments: list[AttachmentInfo]
+    events: list[EventInfo]
+    report_figures: list[ReportFigures]
     summary: str

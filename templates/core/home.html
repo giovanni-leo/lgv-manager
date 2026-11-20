@@ -23,11 +23,11 @@
     </ul>
   </section>
   <section class="card">
-    <header><h2>{% translate "Upcoming general assemblies" %}</h2></header>
+    <header><h2>{% translate "Upcoming assemblies and meetings" %}</h2></header>
     <ul class="docs">
       {% for i in assemblies %}
       <li><a href="{% url 'company_detail' i.company_id %}"><strong>{{ i.company.name }}</strong></a> · {{ i.occurred_on|date:"Y-m-d" }}
-        <span class="muted">{{ i.occurred_on|days_left }}</span></li>
+        <span class="muted">{{ i.get_kind_display }} · {{ i.occurred_on|days_left }}</span>{% if i.summary %}<br><small class="muted">{{ i.summary }}</small>{% endif %}</li>
       {% empty %}<li class="muted">{% translate "None scheduled." %}</li>{% endfor %}
     </ul>
   </section>

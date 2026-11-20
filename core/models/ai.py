@@ -121,6 +121,8 @@ class Suggestion(models.Model):
         CONTACT = "contact", _("Contact")
         PAST_ROUND = "past_round", _("Past financing round")
         NEWS = "news", _("News")
+        EVENT = "event", _("Upcoming event")
+        FIGURES = "figures", _("Company figures")
 
     class Status(models.TextChoices):
         PENDING = "pending", _("Pending")
@@ -153,7 +155,7 @@ class Suggestion(models.Model):
         constraints = [
             models.CheckConstraint(
                 condition=Q(target__in=["company_field", "deal_field", "deal_note", "participant", "contact",
-                                        "past_round", "news"]),
+                                        "past_round", "news", "event", "figures"]),
                 name="suggestions_target_check",
             ),
             models.CheckConstraint(condition=Q(status__in=["pending", "accepted", "rejected"]),
