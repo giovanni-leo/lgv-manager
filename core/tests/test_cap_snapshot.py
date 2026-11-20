@@ -21,6 +21,17 @@ from .test_documents import make_document, tiny_pdf
 D = date
 
 
+def strict(data, model=None):
+    """The documents' unknowns the way Claude returns them: "" for text, 0 for numbers, False for flags."""
+    model = model or CapTableSnapshot
+    out = dict(data)
+    for name, field in model.model_fields.items():
+        if out.get(name) is None and name in out or name not in out:
+            out[name] = {str: "", int: 0, float: 0, bool: False, list: []}.get(field.annotation, None) \
+                if field.annotation in (str, int, float, bool) else out.get(name)
+    return out
+
+
 def klass(name, shares, price=None, rank=None, common=False):
     return dict(name=name, is_common=common, shares_outstanding=shares, original_issue_price=price,
                 liquidation_multiple=None if common else 1, participating=None if common else False,
@@ -150,11 +161,12 @@ class CapTableJobTests(TestCase):
                                  category="cap_table")
 
     def reading(self):
-        return CapTableReading(snapshot=CapTableSnapshot(**{
+        return CapTableReading(snapshot=CapTableSnapshot(**strict({
             **SERIES_B,
-            "classes": [ClassSnapshot(**c) for c in SERIES_B["classes"]],
+            "classes": [ClassSnapshot(**strict(c, ClassSnapshot)) for c in SERIES_B["classes"]],
             "lead_investors": [InvestorRef(**i) for i in SERIES_B["lead_investors"]],
-            "our_holdings": [HoldingSnapshot(**h) for h in SERIES_B["our_holdings"]]}), note=None)
+            "our_holdings": [HoldingSnapshot(**strict(h, HoldingSnapshot)) for h in SERIES_B["our_holdings"]]},
+            CapTableSnapshot)), note="")
 
     def run_job(self):
         job = jobs.claim_next_job()
@@ -217,3 +229,25 @@ class CapTableJobTests(TestCase):
         Company.objects.filter(pk=self.co.pk).update(status="portfolio")
         ShareClass.objects.create(company=self.co, name="Common", is_common=True)
         self.assertContains(self.client.get(f"/companies/{self.co.pk}/"), "Read from documents")
+
+
+class SchemaSizeTests(TestCase):
+    """Structured outputs refuse a schema whose grammar is too large (it happened with a long email schema).
+    Optional fields (``X | None``) are what makes a schema grow, so the schemas Claude must fill have none."""
+
+    def test_email_and_cap_table_schemas_have_no_optional_fields(self):
+        import json
+
+        from core.ai.schemas import CapTableReading, EmailExtraction
+
+        email = json.dumps(EmailExtraction.model_json_schema())
+        self.assertEqual(email.count('"anyOf"'), 0)
+        self.assertLessEqual(json.dumps(CapTableReading.model_json_schema()).count('"anyOf"'), 1)
+
+    def test_reading_with_unknowns_written_as_empty_values(self):
+        snap = dict(SERIES_B, round_amount_raised=0, pre_money=0, post_money=0, option_pool_granted=0, caveats="",
+                    our_holdings=[], lead_investors=[])
+        co = Company.objects.create(name="X")
+        apply_snapshot(co, snap)                                   # 0 and "" mean "not stated"
+        self.assertEqual(FundingRound.objects.get().amount, Decimal("29999943.71"))   # stated amount: used as is
+        self.assertIsNone(OptionPool.objects.get().granted)

@@ -133,7 +133,8 @@ def _company_facts(job, company, deal, facts):
             continue
         was = f" (now: {current})" if current else ""
         _suggest(job, company, deal, Suggestion.Target.COMPANY_FIELD, {"field": f.field, "value": f.value},
-                 f"{FIELD_LABELS[f.field]}: {f.value}{was}", f.source_url, f.evidence, f.confidence)
+                 f"{FIELD_LABELS[f.field]}: {f.value}{was}", getattr(f, "source_url", None) or None,
+                 f.evidence or None, f.confidence)
 
 
 def _people(job, company, deal, people, investor_names=()):
@@ -145,10 +146,11 @@ def _people(job, company, deal, people, investor_names=()):
             continue
         org = by_investor.get(_norm(p.organization))
         payload = {"full_name": p.full_name, "role": p.role, "email": p.email, "phone": p.phone,
-                   "profile_url": p.profile_url, "co_investor": org}
+                   "profile_url": getattr(p, "profile_url", None), "co_investor": org}
         where = p.organization or company.name
         _suggest(job, company, deal, Suggestion.Target.CONTACT, payload,
-                 f"{p.full_name} – {p.role or 'role unknown'} ({where})", p.source_url, None, p.confidence)
+                 f"{p.full_name} – {p.role or 'role unknown'} ({where})", getattr(p, "source_url", None), None,
+                 getattr(p, "confidence", None))
 
 
 def suggestions_from_research(job, company, research):
@@ -273,7 +275,7 @@ def _save_attachments(company, deal, attachments, infos):
         doc = Document(company=company, deal=deal, folder=_folder(company, info.folder) if info else None,
                        category=info.category if info else "other",
                        title=(info.title if info else att["filename"])[:300],
-                       document_date=parse_date(info.document_date) if info and info.document_date else None,
+                       document_date=parse_date_or_none(info.document_date) if info and info.document_date else None,
                        notes="Received by email")
         doc.file = ContentFile(att["data"], name=att["filename"])  # saved, and hashed, by doc.save()
         doc.save()
@@ -292,7 +294,7 @@ def _events_and_figures(job, company, deal, extraction):
         seen.add(key)
         label = f"{when} {EVENT_LABELS[e.kind]}" + (f", {e.time}" if e.time else "") \
             + (f", {e.location}" if e.location else "")
-        _suggest(job, company, deal, Suggestion.Target.EVENT, e.model_dump(), label, None, e.evidence or e.agenda)
+        _suggest(job, company, deal, Suggestion.Target.EVENT, e.model_dump(), label, None, e.agenda or None)
     for f in extraction.report_figures:
         when = parse_date_or_none(f.as_of)
         if when is None or company.metrics.filter(as_of=when).exists():
@@ -303,7 +305,7 @@ def _events_and_figures(job, company, deal, extraction):
             parts.append(f"{f.headcount} employees")
         if parts:
             _suggest(job, company, deal, Suggestion.Target.FIGURES, f.model_dump(),
-                     f"Figures as of {when}: " + ", ".join(parts), None, f.evidence)
+                     f"Figures as of {when}: " + ", ".join(parts))
 
 
 def parse_date_or_none(value):
@@ -356,11 +358,11 @@ def run_email(job):
             if _norm(getattr(deal, f.field, None)) == _norm(f.value):
                 continue
             _suggest(job, company, deal, Suggestion.Target.DEAL_FIELD, {"field": f.field, "value": f.value},
-                     f"{FIELD_LABELS[f.field]}: {f.value}", None, f.evidence, f.confidence)
+                     f"{FIELD_LABELS[f.field]}: {f.value}", None, f.evidence or None, f.confidence)
         for r in extraction.round_investors if deal else []:
             amount = f", {_fmt_amount(r.amount, r.currency or deal.currency)}" if r.amount else ""
             _suggest(job, company, deal, Suggestion.Target.PARTICIPANT, r.model_dump(),
-                     f"{r.name} ({r.kind}) – {r.role.replace('_', '-')}, {r.status}{amount}", None, r.evidence)
+                     f"{r.name} ({r.kind}) – {r.role.replace('_', '-')}, {r.status}{amount}")
         _people(job, company, deal, extraction.people, [r.name for r in extraction.round_investors])
         _events_and_figures(job, company, deal, extraction)
         if extraction.key_terms and deal:

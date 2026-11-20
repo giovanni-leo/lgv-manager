@@ -35,11 +35,12 @@ def _key(name):
 
 
 def _money(value):
-    return None if value in (None, "") else Decimal(str(value)).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+    """An amount, or None when it is not stated (empty or 0)."""
+    return Decimal(str(value)).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP) if value else None
 
 
 def _price(value):
-    return None if value in (None, "") else Decimal(str(value)).quantize(Decimal("0.000001"))
+    return Decimal(str(value)).quantize(Decimal("0.000001")) if value else None
 
 
 def match_entity(name, entities):
@@ -105,11 +106,11 @@ def apply_snapshot(company, snap, closing_default=None, source_document=None):
             result.lines.append(f"{cls.name}: {delta:,} shares added")
 
     # --- Option pool and warrants ---------------------------------------------------------------
-    if snap.get("option_pool_total") is not None or snap.get("warrants") is not None:
+    if snap.get("option_pool_total") or snap.get("warrants"):
         pool, _created = OptionPool.objects.get_or_create(company=company, as_of=closing,
                                                           defaults={"authorized": snap.get("option_pool_total") or 0})
         pool.authorized = snap.get("option_pool_total") or pool.authorized
-        pool.granted = snap.get("option_pool_granted") if snap.get("option_pool_granted") is not None else pool.granted
+        pool.granted = snap.get("option_pool_granted") or pool.granted
         if pool.granted is not None and pool.granted > pool.authorized:
             pool.granted = None
         pool.warrants = snap.get("warrants") or 0

@@ -9,7 +9,7 @@
         <td class="num">{{ c.conversion_ratio|default:1 }}×</td></tr>
     {% endfor %}</tbody>
   </table></div>
-  <p class="small">{% if snap.option_pool_total is not None %}{% translate "Option pool" %} {{ snap.option_pool_total|num }}{% if snap.option_pool_granted is not None %} ({{ snap.option_pool_granted|num }} {% translate "granted" %}){% endif %} · {% endif %}{% if snap.warrants is not None %}{% translate "Warrants" %} {{ snap.warrants|num }} · {% endif %}{% if snap.fully_diluted_total %}{% translate "Fully diluted" %} {{ snap.fully_diluted_total|num }}{% endif %}</p>
+  <p class="small">{% if snap.option_pool_total %}{% translate "Option pool" %} {{ snap.option_pool_total|num }}{% if snap.option_pool_granted %} ({{ snap.option_pool_granted|num }} {% translate "granted" %}){% endif %} · {% endif %}{% if snap.warrants %}{% translate "Warrants" %} {{ snap.warrants|num }} · {% endif %}{% if snap.fully_diluted_total %}{% translate "Fully diluted" %} {{ snap.fully_diluted_total|num }}{% endif %}</p>
   {% if snap.round_name %}<p class="small">{{ snap.round_name }}{% if snap.round_price_per_share %} · {% translate "price" %} {{ snap.currency }} {{ snap.round_price_per_share }}{% endif %}{% if snap.round_amount_raised %} · {% translate "raised" %} {{ snap.round_amount_raised|money:snap.currency }}{% endif %}{% if snap.post_money %} · {% translate "post-money" %} {{ snap.post_money|money:snap.currency }}{% endif %}</p>{% endif %}
   {% if snap.our_holdings %}<p class="small"><strong>{% translate "Our holdings" %}:</strong>
     {% for h in snap.our_holdings %}{{ h.investor_name }}: {{ h.shares|num }} {{ h.class_name }}{% if h.amount %} ({{ h.amount|money:snap.currency }}){% endif %}{% if not forloop.last %}; {% endif %}{% endfor %}</p>{% endif %}

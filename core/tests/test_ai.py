@@ -15,9 +15,9 @@ from django.test import TestCase, override_settings
 
 from core.ai import claude, jobs, mail
 from core.ai.apply import SuggestionError, decide
-from core.ai.schemas import (AttachmentInfo, CompanyFact, CompanyResearch, DealFact, EmailExtraction, EventInfo,
-                             InvestorRef, ReportFigures,
-                             NewsItem, PastRound, Person, RoundInvestor)
+from core.ai.schemas import (AttachmentInfo, CompanyFact, CompanyResearch, DealFact, EmailExtraction, EmailFact,
+                             EmailPerson, EventInfo, InvestorRef, NewsItem, PastRound, Person, ReportFigures,
+                             RoundInvestor)
 from core.models import (AiJob, CoInvestor, Company, CompanyMetric, Contact, Deal, Document, InboundEmail, Interaction,
                          RoundParticipant, Suggestion, Valuation)
 from core.roles import assign_role
@@ -113,19 +113,18 @@ def make_eml(sender="anna@lakegrowth.example", subject="CardioSense Series C", f
 def email_result(company_name="CardioSense", **extra):
     return EmailExtraction(
         company_name=company_name, company_website="https://www.cardiosense.example",
-        company_facts=[CompanyFact(field="city", value="Lausanne", source_url=None, evidence="Signature",
-                                   confidence="high")],
-        deal_facts=[DealFact(field="round_name", value="Series C", evidence=None, confidence="high"),
+        company_facts=[EmailFact(field="city", value="Lausanne", evidence="Signature", confidence="high")],
+        deal_facts=[DealFact(field="round_name", value="Series C", evidence="", confidence="high"),
                     DealFact(field="round_size", value="12000000", evidence="Round CHF 12M", confidence="high"),
                     DealFact(field="pre_money", value="40000000", evidence="CHF 40M pre", confidence="high"),
                     DealFact(field="deadline", value="2026-12-15", evidence="closing 15 December",
                              confidence="medium")],
         round_investors=[RoundInvestor(name="Alpine Health Ventures", kind="vc", role="lead", status="committed",
-                                       amount=5_000_000, currency="CHF", evidence=None)],
-        people=[Person(full_name="Claire Martin", role="CEO", organization="CardioSense", email="claire@x.example",
-                       phone=None, profile_url=None, source_url=None, confidence="high"),
-                Person(full_name="Sophie Keller", role="Partner", organization="Alpine Health Ventures",
-                       email=None, phone=None, profile_url=None, source_url=None, confidence="high")],
+                                       amount=5_000_000, currency="CHF")],
+        people=[EmailPerson(full_name="Claire Martin", role="CEO", organization="CardioSense",
+                            email="claire@x.example", phone=""),
+                EmailPerson(full_name="Sophie Keller", role="Partner", organization="Alpine Health Ventures",
+                            email="", phone="")],
         key_terms="Series C preferred\n1x non-participating liquidation preference",
         attachments=[AttachmentInfo(filename="deck.pdf", category="pitch_deck", title="CardioSense Series C deck",
                                     document_date="2026-11-01", folder="Series C")],
@@ -369,7 +368,7 @@ class EmailTests(TestCase):
         self.assertEqual(inbound.company.status, "prospect")
 
     def test_unknown_company_waits_for_a_choice(self):
-        inbound = self.process(make_eml(), email_result(None).model_copy(update={"company_website": None}))
+        inbound = self.process(make_eml(), email_result("").model_copy(update={"company_website": ""}))
         self.assertEqual(inbound.status, "needs_company")
         self.assertFalse(Deal.objects.exists())
 
@@ -667,7 +666,7 @@ class EmailEventsAndFiguresTests(TestCase):
 
     def result(self, **kw):
         base = email_result("CardioSense").model_dump()
-        base.update(deal_facts=[], round_investors=[], key_terms=None, **kw)
+        base.update(deal_facts=[], round_investors=[], key_terms="", **kw)
         return EmailExtraction(**base)
 
     def test_portfolio_company_report_creates_no_deal(self):
@@ -685,7 +684,7 @@ class EmailEventsAndFiguresTests(TestCase):
 
     def test_event_becomes_a_future_interaction_after_accepting(self):
         event = EventInfo(kind="general_assembly", date="2027-06-12", time="14:00", location="Geneva",
-                          title="Ordinary general assembly 2027", agenda="Accounts, discharge", evidence="Invitation")
+                          title="Ordinary general assembly 2027", agenda="Accounts, discharge")
         self.process(self.result(events=[event], report_figures=[]))
         s = Suggestion.objects.get(target="event")
         self.assertIn("2027-06-12 General assembly, 14:00, Geneva", s.label)
@@ -701,14 +700,13 @@ class EmailEventsAndFiguresTests(TestCase):
 
     def test_known_events_are_not_proposed_again(self):
         Interaction.objects.create(company=self.company, kind="board", occurred_on=date(2027, 3, 4), summary="Board")
-        event = EventInfo(kind="board", date="2027-03-04", time=None, location=None, title="Board", agenda=None,
-                          evidence=None)
+        event = EventInfo(kind="board", date="2027-03-04", time="", location="", title="Board", agenda="")
         self.process(self.result(events=[event], report_figures=[]))
         self.assertFalse(Suggestion.objects.filter(target="event").exists())
 
     def test_report_figures_fill_company_metrics(self):
         figures = ReportFigures(as_of="2026-09-30", currency="USD", cash=4200000, monthly_burn=350000,
-                                revenue_ttm=None, headcount=42, evidence="Q3 report p.2")
+                                revenue_ttm=0, headcount=42)
         self.process(self.result(events=[], report_figures=[figures]))
         s = Suggestion.objects.get(target="figures")
         self.assertEqual(s.label, "Figures as of 2026-09-30: cash USD 4.2M, burn/month USD 350k, 42 employees")

@@ -66,11 +66,30 @@ class CompanyResearch(BaseModel):
     caveats: str | None
 
 
+# The models below are used for emails. They have no optional fields on purpose: every ``X | None`` adds to the
+# grammar that structured outputs compile, and the API refuses a schema that is too large. An unknown text is "",
+# an unknown number is 0.
+
+class EmailFact(BaseModel):
+    field: CompanyField
+    value: str
+    evidence: str                     # "" if none
+    confidence: Confidence
+
+
 class DealFact(BaseModel):
     field: DealField
     value: str                        # numbers as plain digits, dates as YYYY-MM-DD
-    evidence: str | None
+    evidence: str                     # "" if none
     confidence: Confidence
+
+
+class EmailPerson(BaseModel):
+    full_name: str
+    role: str                         # "" if not stated
+    organization: str
+    email: str
+    phone: str
 
 
 class RoundInvestor(BaseModel):
@@ -78,47 +97,44 @@ class RoundInvestor(BaseModel):
     kind: InvestorKind
     role: Literal["lead", "co_lead", "participant"]
     status: Literal["contacted", "interested", "committed", "signed", "declined"]
-    amount: float | None
-    currency: str | None
-    evidence: str | None
+    amount: float                     # 0 if not stated
+    currency: str                     # "" if not stated
 
 
 class AttachmentInfo(BaseModel):
     filename: str
     category: DocumentCategory
     title: str
-    document_date: str | None
-    folder: str | None                # groups documents that belong together, e.g. "Series B", "Board 2026-03"
+    document_date: str                # YYYY-MM-DD, "" if unknown
+    folder: str                       # groups documents that belong together, e.g. "Series B"; "" if alone
 
 
 class EventInfo(BaseModel):
     kind: Literal["general_assembly", "board", "meeting"]
     date: str                         # YYYY-MM-DD
-    time: str | None                  # HH:MM, 24 hours
-    location: str | None              # city, address or video link
+    time: str                         # HH:MM, "" if not stated
+    location: str                     # city, address or video link; "" if not stated
     title: str
-    agenda: str | None                # short agenda, if given
-    evidence: str | None
+    agenda: str                       # short agenda, "" if none
 
 
 class ReportFigures(BaseModel):
     as_of: str                        # YYYY-MM-DD, end of the period the figures refer to
-    currency: str | None
-    cash: float | None
-    monthly_burn: float | None
-    revenue_ttm: float | None
-    headcount: int | None
-    evidence: str | None
+    currency: str                     # "" if not stated
+    cash: float                       # 0 if not stated
+    monthly_burn: float
+    revenue_ttm: float
+    headcount: int
 
 
 class EmailExtraction(BaseModel):
-    company_name: str | None
-    company_website: str | None
-    company_facts: list[CompanyFact]
+    company_name: str                 # "" if the email does not say
+    company_website: str
+    company_facts: list[EmailFact]
     deal_facts: list[DealFact]
     round_investors: list[RoundInvestor]
-    people: list[Person]
-    key_terms: str | None
+    people: list[EmailPerson]
+    key_terms: str                    # "" if none
     attachments: list[AttachmentInfo]
     events: list[EventInfo]
     report_figures: list[ReportFigures]
@@ -131,42 +147,42 @@ class ClassSnapshot(BaseModel):
     name: str                          # as in the documents, e.g. "Common", "Series A-1 Preferred"
     is_common: bool
     shares_outstanding: int            # issued and outstanding right after the closing
-    original_issue_price: float | None
-    liquidation_multiple: float | None  # 1 = one times the original issue price
-    participating: bool | None
-    seniority_rank: int | None         # 1 = paid first in a liquidation; equal numbers = pari passu; null for common
-    conversion_ratio: float | None     # common shares per share of this class, usually 1
+    original_issue_price: float        # 0 if not stated
+    liquidation_multiple: float        # 1 = one times the original issue price; 0 for common
+    participating: bool
+    seniority_rank: int                # 1 = paid first in a liquidation; equal numbers = pari passu; 0 for common
+    conversion_ratio: float            # common shares per share of this class, usually 1
 
 
 class HoldingSnapshot(BaseModel):
     investor_name: str                 # as written in the documents
     class_name: str
     shares: int
-    price_per_share: float | None
-    amount: float | None
+    price_per_share: float             # 0 if not stated
+    amount: float                      # 0 if not stated
 
 
 class CapTableSnapshot(BaseModel):
-    round_name: str | None             # e.g. "Series B"
-    closing_date: str | None           # YYYY-MM-DD
-    currency: str | None
+    round_name: str                    # e.g. "Series B"; "" if unknown
+    closing_date: str                  # YYYY-MM-DD; "" if unknown
+    currency: str
     classes: list[ClassSnapshot]
-    option_pool_total: int | None      # options granted plus shares still available for grant, not exercised
-    option_pool_granted: int | None
-    warrants: int | None
-    fully_diluted_total: int | None    # as stated in the documents
-    round_class_name: str | None       # the class sold in this round
-    round_price_per_share: float | None
-    round_amount_raised: float | None
-    pre_money: float | None
-    post_money: float | None
+    option_pool_total: int             # options granted plus shares still available for grant, not exercised; 0 if unknown
+    option_pool_granted: int           # 0 if unknown
+    warrants: int                      # 0 if none or unknown
+    fully_diluted_total: int           # as stated in the documents; 0 if not stated
+    round_class_name: str              # the class sold in this round; "" if unknown
+    round_price_per_share: float       # 0 if unknown
+    round_amount_raised: float         # 0 if unknown
+    pre_money: float                   # 0 if not stated
+    post_money: float                  # 0 if not stated
     lead_investors: list[InvestorRef]
     other_investors: list[InvestorRef]
     our_holdings: list[HoldingSnapshot]  # only purchasers that are one of our investing entities
     evidence: str                      # which documents and sections the numbers come from
-    caveats: str | None                # conflicts between documents, missing data
+    caveats: str                       # conflicts between documents, missing data; "" if none
 
 
 class CapTableReading(BaseModel):
     snapshot: CapTableSnapshot | None  # null when the documents do not describe a capitalization
-    note: str | None
+    note: str                          # "" if nothing to add

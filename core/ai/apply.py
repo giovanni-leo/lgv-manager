@@ -110,7 +110,7 @@ def _participant(s):
     RoundParticipant.objects.update_or_create(
         deal=s.deal, co_investor=investor,
         defaults={"role": p.get("role") or "participant", "status": p.get("status") or "interested",
-                  "amount": parse_amount(p.get("amount")),
+                  "amount": parse_amount(p.get("amount") or None),
                   "currency": parse_currency(p.get("currency"), s.deal.currency)})
 
 
@@ -195,7 +195,7 @@ def _figures(s):
         company=s.company, as_of=when, defaults={"currency": parse_currency(p.get("currency"), "CHF")})
     for field, parser in (("cash", parse_amount), ("monthly_burn", parse_amount), ("revenue_ttm", parse_amount),
                           ("headcount", _whole_number)):
-        value = parser(p.get(field))
+        value = parser(p.get(field) or None)             # 0 and "" mean "not stated"
         if value is not None and getattr(metric, field) is None:
             setattr(metric, field, value)
     metric.save()
