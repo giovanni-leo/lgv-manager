@@ -20,6 +20,7 @@ from .sections import SECTIONS, formfield
 from .services.ownership import consistency_warnings
 from .services.portfolio import (company_summary, deal_summary, known_investors, portfolio_totals,
                                  report_documents, runway, timeline)
+from .widgets import IsoDateInput
 
 OPEN_STAGES = [s.value for s in FUNNEL_STAGES if s != DealStage.INVESTED]
 
@@ -62,7 +63,7 @@ class NewDealForm(forms.Form):
     pre_money = forms.DecimalField(required=False, min_value=0, max_digits=18, decimal_places=2)
     proposed_ticket = forms.DecimalField(required=False, min_value=0, max_digits=18, decimal_places=2)
     currency = forms.ChoiceField(choices=Deal._meta.get_field("currency").choices, initial="CHF")
-    deadline = forms.DateField(required=False, widget=forms.DateInput(attrs={"type": "date"}))
+    deadline = forms.DateField(required=False, widget=IsoDateInput())
     source_contact = forms.ModelChoiceField(queryset=Contact.objects.all(), required=False)
 
     def clean(self):

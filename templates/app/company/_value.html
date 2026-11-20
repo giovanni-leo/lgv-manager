@@ -4,10 +4,10 @@
     {% if perms.core.add_companymetric %}<a class="btn small" href="{% admin_add 'companymetric' company=company.pk %}">+ {% translate "Figures" %}</a>{% endif %}</header>
   <dl class="facts">
     <div><dt>{% translate "Company value" %}</dt><dd>{{ s.company_value|money:s.currency }}
-      {% if s.valuation %}<small>{{ s.valuation.get_method_display }}, {{ s.valuation.valuation_date|date:"M Y" }}</small>{% endif %}</dd></div>
+      {% if s.valuation %}<small>{{ s.valuation.get_method_display }}, {{ s.valuation.valuation_date|date:"Y-m" }}</small>{% endif %}</dd></div>
     <div class="runway-{{ s.runway.level }}"><dt>{% translate "Runway" %}</dt>
       <dd>{% if s.runway.months is not None %}{{ s.runway.months }} {% translate "months" %}{% else %}–{% endif %}
-      {% if s.runway %}<small>{% translate "figures of" %} {{ s.runway.metric.as_of|date:"M Y" }}</small>{% endif %}</dd></div>
+      {% if s.runway %}<small>{% translate "figures of" %} {{ s.runway.metric.as_of|date:"Y-m" }}</small>{% endif %}</dd></div>
     {% if s.runway %}{% with m=s.runway.metric %}
     <div><dt>{% translate "Cash" %}</dt><dd>{{ m.cash|money:m.currency }}</dd></div>
     <div><dt>{% translate "Monthly burn" %}</dt><dd>{{ m.monthly_burn|money:m.currency }}</dd></div>

@@ -1,12 +1,12 @@
-"""English texts, European date and time conventions."""
+"""English texts; dates are always YYYY-MM-DD."""
 
-DATE_FORMAT = "j M Y"
-DATETIME_FORMAT = "j M Y, H:i"
+DATE_FORMAT = "Y-m-d"
+DATETIME_FORMAT = "Y-m-d H:i"
 TIME_FORMAT = "H:i"
-YEAR_MONTH_FORMAT = "F Y"
-MONTH_DAY_FORMAT = "j F"
-SHORT_DATE_FORMAT = "d.m.Y"
-SHORT_DATETIME_FORMAT = "d.m.Y H:i"
+YEAR_MONTH_FORMAT = "Y-m"
+MONTH_DAY_FORMAT = "m-d"
+SHORT_DATE_FORMAT = "Y-m-d"
+SHORT_DATETIME_FORMAT = "Y-m-d H:i"
 FIRST_DAY_OF_WEEK = 1  # Monday
 
 # The first format is the one the admin date picker writes.

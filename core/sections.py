@@ -11,6 +11,7 @@ from django import forms
 from django.db import models
 
 from .models import Company, Deal, RoundParticipant
+from .widgets import IsoDateInput
 
 LONG_TEXT = {"notes", "description", "source_note", "pass_reason", "details"}
 
@@ -20,7 +21,7 @@ def formfield(db_field, **kwargs):
     if field is None:
         return None
     if isinstance(db_field, models.DateField):
-        field.widget = forms.DateInput(attrs={"type": "date"}, format="%Y-%m-%d")
+        field.widget = IsoDateInput()
     elif isinstance(db_field, models.DecimalField):
         field.widget = forms.NumberInput(attrs={"step": "any", "inputmode": "decimal"})
     elif isinstance(db_field, models.TextField) and not db_field.choices:

@@ -3,6 +3,6 @@
   <span class="muted">{{ d.round_name|default:"" }}{% if d.round_size %} · {{ d.round_size|money:d.currency }}{% endif %}</span>
   {% if d.pre_money %}<span>{% translate "Pre" %} {{ d.pre_money|money:d.currency }}</span>{% endif %}
   {% if d.lead %}<span>{% translate "Lead" %}: {{ d.lead.name }}</span>{% endif %}
-  {% if d.deadline %}<span class="{{ d.deadline|due_class }}">⏱ {{ d.deadline|date:"j M" }} · {{ d.deadline|days_left }}</span>{% endif %}
-  {% if d.next_step %}<span class="next {{ d.next_step_due|due_class }}">→ {{ d.next_step|truncatechars:60 }}{% if d.next_step_due %} ({{ d.next_step_due|date:"j M" }}){% endif %}</span>{% endif %}
+  {% if d.deadline %}<span class="{{ d.deadline|due_class }}">⏱ {{ d.deadline|date:"m-d" }} · {{ d.deadline|days_left }}</span>{% endif %}
+  {% if d.next_step %}<span class="next {{ d.next_step_due|due_class }}">→ {{ d.next_step|truncatechars:60 }}{% if d.next_step_due %} ({{ d.next_step_due|date:"m-d" }}){% endif %}</span>{% endif %}
 </a>

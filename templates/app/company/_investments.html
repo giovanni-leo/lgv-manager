@@ -3,11 +3,11 @@
     {% if perms.core.add_investment %}<a class="btn small" href="{% admin_add 'investment' company=company.pk %}">{% translate "Add" %}</a>{% endif %}</header>
   <ul class="docs">
     {% for i in investments %}
-    <li><a href="{% admin_change 'investment' i.pk %}">{{ i.invest_date|date:"j M Y" }} · {{ i.get_instrument_display }}</a>
+    <li><a href="{% admin_change 'investment' i.pk %}">{{ i.invest_date|date:"Y-m-d" }} · {{ i.get_instrument_display }}</a>
       <span class="muted">{{ i.amount|money:i.currency }}{% if i.shares %} · {{ i.shares|num }} {{ i.share_class.name }}{% endif %}</span></li>
     {% empty %}<li class="muted">{% translate "No investments recorded." %}</li>{% endfor %}
     {% for r in realizations %}
-    <li><a href="{% admin_change 'realization' r.pk %}">{{ r.realized_on|date:"j M Y" }} · {{ r.get_kind_display }}</a>
+    <li><a href="{% admin_change 'realization' r.pk %}">{{ r.realized_on|date:"Y-m-d" }} · {{ r.get_kind_display }}</a>
       <span class="muted">+{{ r.proceeds|money:r.currency }}</span></li>
     {% endfor %}
   </ul>

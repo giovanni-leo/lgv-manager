@@ -11,7 +11,7 @@
   {% endif %}
   <ol class="timeline">
     {% for e in events %}
-    <li><time datetime="{{ e.date|date:'Y-m-d' }}">{{ e.date|date:"j M Y" }}</time>
+    <li><time datetime="{{ e.date|date:'Y-m-d' }}">{{ e.date|date:"Y-m-d" }}</time>
       <span class="badge ev-{{ e.code }}">{{ e.kind }}</span> {{ e.title }}</li>
     {% empty %}<li class="muted">{% translate "Nothing recorded yet." %}</li>{% endfor %}
   </ol>

@@ -14,9 +14,9 @@
       </dl>
     </div>
     <dl class="facts compact side">
-      <div><dt>{% translate "Last financing round" %}</dt><dd>{% with r=latest_round %}{% if r %}{{ r.round_name }}{% if r.amount %} · {{ r.amount|money:r.currency }}{% endif %}<small>{{ r.announced_on|date:"M Y"|default:"" }}{% if r.post_money %} · {% translate "post-money" %} {{ r.post_money|money:r.currency }}{% endif %}</small>{% else %}–{% endif %}{% endwith %}</dd></div>
+      <div><dt>{% translate "Last financing round" %}</dt><dd>{% with r=latest_round %}{% if r %}{{ r.round_name }}{% if r.amount %} · {{ r.amount|money:r.currency }}{% endif %}<small>{{ r.announced_on|date:"Y-m"|default:"" }}{% if r.post_money %} · {% translate "post-money" %} {{ r.post_money|money:r.currency }}{% endif %}</small>{% else %}–{% endif %}{% endwith %}</dd></div>
       <div><dt>{% translate "Key people" %}</dt><dd>{% for row in contacts|slice:":4" %}{{ row.contact.full_name }}{% if row.contact.role %} <small class="inline">{{ row.contact.role }}</small>{% endif %}{% if not forloop.last %}<br>{% endif %}{% empty %}–{% endfor %}</dd></div>
-      <div><dt>{% translate "Next event" %}</dt><dd>{% if next_event %}{{ next_event.title }}<small>{{ next_event.date|date:"j M Y" }} · {{ next_event.date|days_left }}</small>{% else %}–{% endif %}</dd></div>
+      <div><dt>{% translate "Next event" %}</dt><dd>{% if next_event %}{{ next_event.title }}<small>{{ next_event.date|date:"Y-m-d" }} · {{ next_event.date|days_left }}</small>{% else %}–{% endif %}</dd></div>
       <div><dt>{% translate "Documents" %}</dt><dd>{{ documents_count }}{% if documents_count %}<small><a href="#documents-card">{% translate "see below" %}</a></small>{% endif %}</dd></div>
     </dl>
   </div>

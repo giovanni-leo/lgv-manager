@@ -34,8 +34,8 @@
       <td class="num">{{ s.moic|multiple }}</td>
       <td class="num">{{ s.irr|ratio_pct }}</td>
       <td class="num">{% if s.runway.months is not None %}<span class="runway-{{ s.runway.level }}">{{ s.runway.months }} {% translate "mo" %}</span>{% else %}–{% endif %}</td>
-      <td>{{ s.last_report|date:"j M Y"|default:"–" }}</td>
-      <td>{{ s.next_assembly|date:"j M Y"|default:"–" }}</td>
+      <td>{{ s.last_report|date:"Y-m-d"|default:"–" }}</td>
+      <td>{{ s.next_assembly|date:"Y-m-d"|default:"–" }}</td>
     </tr>
   {% empty %}
     <tr><td colspan="9" class="muted">{% translate "No portfolio companies yet. A company appears here when its status is Portfolio, for example after a deal is marked as invested." %}</td></tr>

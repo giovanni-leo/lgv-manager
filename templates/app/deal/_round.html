@@ -6,7 +6,7 @@
     <div><dt>{% translate "Pre-money" %}</dt><dd>{{ deal.pre_money|money:deal.currency }}</dd></div>
     <div><dt>{% translate "Post-money" %}</dt><dd>{{ ds.post_money|money:deal.currency }}</dd></div>
     <div class="{{ deal.deadline|due_class }}"><dt>{% translate "Deadline" %}</dt>
-      <dd>{{ deal.deadline|date:"j M Y"|default:"–" }}{% if deal.deadline %}<small>{{ deal.deadline|days_left }}</small>{% endif %}</dd></div>
+      <dd>{{ deal.deadline|date:"Y-m-d"|default:"–" }}{% if deal.deadline %}<small>{{ deal.deadline|days_left }}</small>{% endif %}</dd></div>
     <div><dt>{% translate "Our ticket" %}</dt><dd>{{ deal.proposed_ticket|money:deal.currency }}</dd></div>
     <div><dt>{% translate "Our stake" %}</dt><dd>{{ ds.implied_stake_pct|pct }}<small>{% translate "ticket / post-money" %}</small></dd></div>
   </dl>

@@ -9,7 +9,7 @@
       {% for x in deadlines %}
       <li class="{{ x.date|due_class }}"><a href="{% url 'deal_detail' x.deal.pk %}"><strong>{{ x.deal.company.name }}</strong></a>
         · {% translate x.label %}{% if x.text %}: {{ x.text|truncatechars:60 }}{% endif %}
-        <span class="muted">{{ x.date|date:"j M" }} · {{ x.date|days_left }}</span></li>
+        <span class="muted">{{ x.date|date:"m-d" }} · {{ x.date|days_left }}</span></li>
       {% empty %}<li class="muted">{% translate "Nothing due." %}</li>{% endfor %}
     </ul>
   </section>
@@ -18,7 +18,7 @@
     <ul class="docs">
       {% for a in alerts %}
       <li class="runway-{{ a.runway.level }}"><a href="{% url 'company_detail' a.company.pk %}"><strong>{{ a.company.name }}</strong></a>
-        · {{ a.runway.months }} {% translate "months" %} <span class="muted">({% translate "figures of" %} {{ a.runway.metric.as_of|date:"M Y" }})</span></li>
+        · {{ a.runway.months }} {% translate "months" %} <span class="muted">({% translate "figures of" %} {{ a.runway.metric.as_of|date:"Y-m" }})</span></li>
       {% empty %}<li class="muted">{% translate "No company below 12 months of runway." %}</li>{% endfor %}
     </ul>
   </section>
@@ -26,7 +26,7 @@
     <header><h2>{% translate "Upcoming general assemblies" %}</h2></header>
     <ul class="docs">
       {% for i in assemblies %}
-      <li><a href="{% url 'company_detail' i.company_id %}"><strong>{{ i.company.name }}</strong></a> · {{ i.occurred_on|date:"j M Y" }}
+      <li><a href="{% url 'company_detail' i.company_id %}"><strong>{{ i.company.name }}</strong></a> · {{ i.occurred_on|date:"Y-m-d" }}
         <span class="muted">{{ i.occurred_on|days_left }}</span></li>
       {% empty %}<li class="muted">{% translate "None scheduled." %}</li>{% endfor %}
     </ul>
@@ -36,7 +36,7 @@
     <ul class="docs">
       {% for r in recent_rounds %}
       <li><a href="{% url 'company_detail' r.company_id %}"><strong>{{ r.company.name }}</strong></a> · {{ r.round_name }}{% if r.amount %} · {{ r.amount|money:r.currency }}{% endif %}
-        <span class="muted">{{ r.announced_on|date:"M Y" }}{% if r.post_money %} · {% translate "post-money" %} {{ r.post_money|money:r.currency }}{% endif %}{% with leads=r.leads %}{% if leads %} · {% translate "lead" %}: {% for i in leads %}{{ i.name }}{% if not forloop.last %}, {% endif %}{% endfor %}{% endif %}{% endwith %}</span></li>
+        <span class="muted">{{ r.announced_on|date:"Y-m" }}{% if r.post_money %} · {% translate "post-money" %} {{ r.post_money|money:r.currency }}{% endif %}{% with leads=r.leads %}{% if leads %} · {% translate "lead" %}: {% for i in leads %}{{ i.name }}{% if not forloop.last %}, {% endif %}{% endfor %}{% endif %}{% endwith %}</span></li>
       {% empty %}<li class="muted">{% translate "No rounds recorded yet. They appear here as you accept them from web searches or add them to a company." %}</li>{% endfor %}
     </ul>
   </section>
@@ -55,7 +55,7 @@
     <header><h2>{% translate "Recent activity" %}</h2></header>
     <ol class="timeline">
       {% for i in recent %}
-      <li><time>{{ i.occurred_on|date:"j M" }}</time> <span class="badge ev-{{ i.kind }}">{{ i.get_kind_display }}</span>
+      <li><time>{{ i.occurred_on|date:"m-d" }}</time> <span class="badge ev-{{ i.kind }}">{{ i.get_kind_display }}</span>
         {% if i.deal_id %}<a href="{% url 'deal_detail' i.deal_id %}">{% elif i.company_id %}<a href="{% url 'company_detail' i.company_id %}">{% endif %}{{ i.company.name|default:"" }}{% if i.deal_id or i.company_id %}</a>{% endif %}
         – {{ i.summary|truncatechars:80 }}</li>
       {% empty %}<li class="muted">{% translate "Nothing recorded yet." %}</li>{% endfor %}

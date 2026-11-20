@@ -8,7 +8,7 @@
     <tbody>
     {% for r in funding_rounds %}
       <tr>
-        <td>{{ r.announced_on|date:"M Y"|default:"–" }}</td>
+        <td>{{ r.announced_on|date:"Y-m"|default:"–" }}</td>
         <td><strong>{{ r.round_name }}</strong></td>
         <td class="num">{{ r.amount|money:r.currency }}</td>
         <td class="num">{{ r.pre_money|money:r.currency }}</td>

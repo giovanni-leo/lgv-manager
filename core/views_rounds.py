@@ -9,6 +9,7 @@ from django.utils import timezone
 from .models import Company, Deal, InvestingEntity, ShareEvent
 from .services.rounds import ExistingClass, RoundInput, record_round
 from .templatetags.vc import money, num
+from .widgets import IsoDateInput
 
 EXISTING_ROWS = 3
 MONEY = {"max_digits": 18, "decimal_places": 2, "required": False, "min_value": 0}
@@ -21,7 +22,7 @@ def _number(**attrs):
 class RoundForm(forms.Form):
     round_name = forms.CharField(label="Round", max_length=100,
                                  widget=forms.TextInput(attrs={"placeholder": "e.g. Series A"}))
-    round_date = forms.DateField(label="Closing date", widget=forms.DateInput(attrs={"type": "date"}))
+    round_date = forms.DateField(label="Closing date", widget=IsoDateInput())
     share_class = forms.ModelChoiceField(label="Share class of the round", queryset=None, required=False,
                                          empty_label="— new class —")
     new_class_name = forms.CharField(label="New class name", required=False, max_length=100,

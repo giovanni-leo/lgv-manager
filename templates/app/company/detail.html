@@ -16,7 +16,7 @@
 
 {% for d in open_deals %}
 <p class="notice">{% translate "Open round" %}: <a href="{% url 'deal_detail' d.pk %}"><strong>{{ d.round_name|default:_("deal") }}</strong></a>
-  · {{ d.get_stage_display }}{% if d.deadline %} · {% translate "deadline" %} {{ d.deadline|date:"j M Y" }}{% endif %}</p>
+  · {{ d.get_stage_display }}{% if d.deadline %} · {% translate "deadline" %} {{ d.deadline|date:"Y-m-d" }}{% endif %}</p>
 {% endfor %}
 
 {% if pending %}<p class="notice"><a href="#suggestions-card">{% blocktranslate count n=pending|length %}{{ n }} suggestion from Claude to review{% plural %}{{ n }} suggestions from Claude to review{% endblocktranslate %} ↓</a></p>{% endif %}

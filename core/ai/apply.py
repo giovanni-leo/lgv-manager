@@ -96,7 +96,7 @@ def _deal_note(s):
     if s.deal is None:
         raise SuggestionError("There is no deal to update.")
     heading = s.payload.get("heading") or "Key terms"
-    text = f"{heading} ({timezone.localdate():%d.%m.%Y}):\n{s.payload['text'].strip()}"
+    text = f"{heading} ({timezone.localdate():%Y-%m-%d}):\n{s.payload['text'].strip()}"
     s.deal.notes = f"{s.deal.notes}\n\n{text}" if s.deal.notes else text
     s.deal.save(update_fields=["notes", "updated_at"])
 

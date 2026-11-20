@@ -7,6 +7,6 @@
     <div><dt>{% translate "Sector" %}</dt><dd>{{ company.sector|default:"–" }}</dd></div>
     <div><dt>{% translate "Location" %}</dt><dd>{{ company.city|default:"–" }}</dd></div>
     <div><dt>{% translate "Website" %}</dt><dd>{% if company.website %}<a href="{% if '://' not in company.website %}https://{% endif %}{{ company.website }}" target="_blank" rel="noopener">{% translate "open" %} ↗</a>{% else %}–{% endif %}</dd></div>
-    <div><dt>{% translate "Last financing round" %}</dt><dd>{% with r=funding_rounds.0 %}{% if r %}{{ r.round_name }}<small>{{ r.announced_on|date:"M Y"|default:"" }}{% if r.amount %} · {{ r.amount|money:r.currency }}{% endif %}</small>{% else %}–{% endif %}{% endwith %}</dd></div>
+    <div><dt>{% translate "Last financing round" %}</dt><dd>{% with r=funding_rounds.0 %}{% if r %}{{ r.round_name }}<small>{{ r.announced_on|date:"Y-m"|default:"" }}{% if r.amount %} · {{ r.amount|money:r.currency }}{% endif %}</small>{% else %}–{% endif %}{% endwith %}</dd></div>
   </dl>
 </section>

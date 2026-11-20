@@ -37,7 +37,7 @@
     <tbody>
     {% for e in emails %}
       <tr>
-        <td>{{ e.received_at|date:"j M Y H:i" }}</td>
+        <td>{{ e.received_at|date:"Y-m-d H:i" }}</td>
         <td>{{ e.sender }}</td>
         <td><strong>{{ e.subject|default:"–" }}</strong>{% if e.summary %}<br><small class="muted">{{ e.summary|truncatechars:200 }}</small>{% endif %}</td>
         <td><span class="badge em-{{ e.status }}">{{ e.get_status_display }}</span></td>

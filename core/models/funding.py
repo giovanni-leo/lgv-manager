@@ -32,7 +32,7 @@ class FundingRound(models.Model):
         constraints = [currency_check("funding_rounds_currency_check")]
 
     def __str__(self):
-        when = f" ({self.announced_on:%b %Y})" if self.announced_on else ""
+        when = f" ({self.announced_on:%Y-%m})" if self.announced_on else ""
         return f"{self.company} – {self.round_name}{when}"
 
     @property

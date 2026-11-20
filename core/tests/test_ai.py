@@ -622,7 +622,7 @@ class FundingHistoryTests(TestCase):
         verified_client(self.client, self.user)
         home = self.client.get("/").content.decode()
         recent = home.split("Recent financing rounds")[1].split("</section>")[0]
-        for text in ["CardioSense SA", "Series B", "CHF 8M", "Jun 2025", "Alpine Health Ventures"]:
+        for text in ["CardioSense SA", "Series B", "CHF 8M", "2025-06", "Alpine Health Ventures"]:
             self.assertIn(text, recent)
 
     def test_old_round_news_items_are_removed(self):

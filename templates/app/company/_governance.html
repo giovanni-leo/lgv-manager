@@ -4,9 +4,9 @@
   <dl class="facts">
     <div><dt>{% translate "Our board role" %}</dt><dd>{{ company.get_board_role_display }}</dd></div>
     <div><dt>{% translate "Reporting" %}</dt><dd>{{ company.get_reporting_frequency_display|default:"–" }}</dd></div>
-    <div><dt>{% translate "Last report" %}</dt><dd>{{ s.last_report|date:"j M Y"|default:"–" }}</dd></div>
-    <div><dt>{% translate "Last general assembly" %}</dt><dd>{{ s.last_assembly|date:"j M Y"|default:"–" }}</dd></div>
-    <div class="{{ s.next_assembly|due_class:14 }}"><dt>{% translate "Next general assembly" %}</dt><dd>{{ s.next_assembly|date:"j M Y"|default:"–" }}{% if s.next_assembly %}<small>{{ s.next_assembly|days_left }}</small>{% endif %}</dd></div>
+    <div><dt>{% translate "Last report" %}</dt><dd>{{ s.last_report|date:"Y-m-d"|default:"–" }}</dd></div>
+    <div><dt>{% translate "Last general assembly" %}</dt><dd>{{ s.last_assembly|date:"Y-m-d"|default:"–" }}</dd></div>
+    <div class="{{ s.next_assembly|due_class:14 }}"><dt>{% translate "Next general assembly" %}</dt><dd>{{ s.next_assembly|date:"Y-m-d"|default:"–" }}{% if s.next_assembly %}<small>{{ s.next_assembly|days_left }}</small>{% endif %}</dd></div>
     <div><dt>{% translate "Data room" %}</dt><dd>{% if company.data_room_url %}<a href="{{ company.data_room_url }}" target="_blank" rel="noopener">{% translate "Open" %} ↗</a>{% else %}–{% endif %}</dd></div>
   </dl>
   <p class="muted small">{% translate "Record a received report or a general assembly in Activity and events (type: Report received / General assembly). A future date is shown as the next assembly." %}</p>
