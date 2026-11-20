@@ -37,6 +37,13 @@ def queue_research(company, deal=None, user=None):
                                           requested_by=user)
 
 
+def queue_cap_table(company, document_ids, user=None):
+    """Queue the reading of financing documents into a cap table proposal."""
+    active = company.ai_jobs.filter(kind=AiJob.Kind.CAP_TABLE, status__in=["queued", "running"]).first()
+    return active or AiJob.objects.create(kind=AiJob.Kind.CAP_TABLE, company=company, requested_by=user,
+                                          params={"documents": list(document_ids)})
+
+
 def claim_next_job():
     with transaction.atomic():
         job = (AiJob.objects.select_for_update(skip_locked=True).filter(status=AiJob.Status.QUEUED)
@@ -60,6 +67,8 @@ def run_job(job):
             run_research(job)
         elif job.kind == AiJob.Kind.EMAIL:
             run_email(job)
+        elif job.kind == AiJob.Kind.CAP_TABLE:
+            run_cap_table(job)
         job.status = AiJob.Status.DONE
     except Exception as exc:  # the job records the failure; the worker keeps running
         log.exception("Job %s failed", job.pk)
@@ -178,6 +187,40 @@ def run_research(job):
     count = job.suggestions.count()
     job.summary = f"{count} new suggestion{'s' if count != 1 else ''}." + (
         f" Note: {research.caveats}" if research.caveats else "")
+
+
+def run_cap_table(job):
+    from core.models import InvestingEntity
+
+    company = job.company
+    docs = list(company.documents.filter(pk__in=job.params.get("documents", [])))
+    if not docs:
+        raise claude.AiError("The selected documents no longer exist.")
+    payload = []
+    for d in docs:
+        with d.file.open("rb") as fh:
+            payload.append({"title": d.title, "filename": d.original_filename, "mime_type": d.mime_type,
+                            "data": fh.read()})
+    entities = list(InvestingEntity.objects.values_list("name", flat=True))
+    reading, usage, notes = claude.read_cap_table(company.name, entities, payload)
+    _record_usage(job, usage)
+    snap = reading.snapshot
+    if snap is None or not snap.classes:
+        job.summary = "The documents do not describe a capitalization." + (f" {reading.note}" if reading.note else "")
+        return
+    closing = parse_date_or_none(snap.closing_date)
+    shares = sum(c.shares_outstanding for c in snap.classes)
+    label = (f"Cap table after {snap.round_name or 'the closing'}" + (f" ({closing})" if closing else "")
+             + f": {len(snap.classes)} classes, {shares:,} shares issued"
+             + (f", {snap.fully_diluted_total:,} fully diluted" if snap.fully_diluted_total else ""))
+    mine = sum(h.shares for h in snap.our_holdings)
+    if mine:
+        label += f", ours {mine:,}"
+    names = ", ".join(d.title for d in docs)
+    _suggest(job, company, None, Suggestion.Target.CAP_TABLE, snap.model_dump(), label, None,
+             f"{snap.evidence} Documents: {names}." + (f" Caveats: {snap.caveats}" if snap.caveats else ""))
+    job.summary = f"{company.name}: cap table proposal from {len(docs)} document(s)." + (
+        f" {'; '.join(notes)}" if notes else "")
 
 
 # --- Email ---------------------------------------------------------------------------------

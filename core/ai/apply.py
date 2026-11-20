@@ -201,6 +201,12 @@ def _figures(s):
     metric.save()
 
 
+def _cap_table(s):
+    from core.services.cap_snapshot import apply_snapshot
+
+    apply_snapshot(s.company, s.payload)
+
+
 HANDLERS = {
     Suggestion.Target.COMPANY_FIELD: _company_field,
     Suggestion.Target.DEAL_FIELD: _deal_field,
@@ -211,6 +217,7 @@ HANDLERS = {
     Suggestion.Target.NEWS: _news,
     Suggestion.Target.EVENT: _event,
     Suggestion.Target.FIGURES: _figures,
+    Suggestion.Target.CAP_TABLE: _cap_table,
 }
 
 

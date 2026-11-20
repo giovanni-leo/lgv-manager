@@ -4,7 +4,8 @@
     {% if perms.core.add_document %}<a class="btn small" href="{% admin_add 'document' company=company.pk deal=deal.pk %}">{% translate "Upload" %}</a>{% endif %}</header>
   {% for folder in document_folders %}
   <details class="doc-folder"{% if forloop.first %} open{% endif %}>
-    <summary><strong>📁 {{ folder.name }}</strong> <span class="muted small">{{ folder.documents.all|length }}</span></summary>
+    <summary><strong>📁 {{ folder.name }}</strong> <span class="muted small">{{ folder.documents.all|length }}</span>
+      {% if ai_enabled and perms.core.add_investment and perms.core.change_company and folder.documents.all %}<a class="muted small" href="{% url 'cap_table_read' company.pk %}?folder={{ folder.pk }}">{% translate "Read cap table" %}</a>{% endif %}</summary>
     <ul class="docs">
       {% for d in folder.documents.all %}
       <li><a href="{{ d.file.url }}" target="_blank" rel="noopener">{{ d.title }}</a> <a class="muted small" href="{% admin_change 'document' d.pk %}">{% translate "edit" %}</a>

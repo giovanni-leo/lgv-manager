@@ -37,6 +37,7 @@ urlpatterns = [
     path("companies/<int:pk>/", views_app.company_detail, name="company_detail"),
     path("companies/<int:company_pk>/rounds/new/", views_rounds.record_round_view, name="record_round"),
     path("s/<str:kind>/<int:pk>/<str:name>/", views_app.section, name="section"),
+    path("companies/<int:company_pk>/cap-table/read/", views_ai.cap_table_read, name="cap_table_read"),
     path("companies/<int:company_pk>/suggestions/", views_ai.suggestions_card, name="suggestions_card"),
     path("companies/<int:company_pk>/research/", views_ai.research_start, name="research_start"),
     path("companies/<int:company_pk>/suggestions/<str:action>-all/", views_ai.suggestions_decide_all,

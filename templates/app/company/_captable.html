@@ -1,6 +1,7 @@
 {% load i18n vc %}<section class="card wide">
   <header><h2>{% translate "Cap table today" %}</h2>
     {% if perms.core.add_investment and perms.core.change_company %}<a class="btn small primary" href="{% url 'record_round' company.pk %}">{% translate "Record a financing round" %}</a>{% endif %}
+    {% if ai_enabled and perms.core.add_investment and perms.core.change_company %}<a class="btn small" href="{% url 'cap_table_read' company.pk %}">📄 {% translate "Read from documents" %}</a>{% endif %}
     {% if perms.core.change_company %}<a class="btn small subtle" href="{% admin_change 'company' company.pk %}">{% translate "Edit classes and events" %}</a>{% endif %}</header>
   {% if s.classes %}
   <div class="table-scroll"><table class="list">

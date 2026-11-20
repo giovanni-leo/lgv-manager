@@ -123,3 +123,50 @@ class EmailExtraction(BaseModel):
     events: list[EventInfo]
     report_figures: list[ReportFigures]
     summary: str
+
+
+# --- Capitalization read from financing documents ---------------------------------------------
+
+class ClassSnapshot(BaseModel):
+    name: str                          # as in the documents, e.g. "Common", "Series A-1 Preferred"
+    is_common: bool
+    shares_outstanding: int            # issued and outstanding right after the closing
+    original_issue_price: float | None
+    liquidation_multiple: float | None  # 1 = one times the original issue price
+    participating: bool | None
+    seniority_rank: int | None         # 1 = paid first in a liquidation; equal numbers = pari passu; null for common
+    conversion_ratio: float | None     # common shares per share of this class, usually 1
+
+
+class HoldingSnapshot(BaseModel):
+    investor_name: str                 # as written in the documents
+    class_name: str
+    shares: int
+    price_per_share: float | None
+    amount: float | None
+
+
+class CapTableSnapshot(BaseModel):
+    round_name: str | None             # e.g. "Series B"
+    closing_date: str | None           # YYYY-MM-DD
+    currency: str | None
+    classes: list[ClassSnapshot]
+    option_pool_total: int | None      # options granted plus shares still available for grant, not exercised
+    option_pool_granted: int | None
+    warrants: int | None
+    fully_diluted_total: int | None    # as stated in the documents
+    round_class_name: str | None       # the class sold in this round
+    round_price_per_share: float | None
+    round_amount_raised: float | None
+    pre_money: float | None
+    post_money: float | None
+    lead_investors: list[InvestorRef]
+    other_investors: list[InvestorRef]
+    our_holdings: list[HoldingSnapshot]  # only purchasers that are one of our investing entities
+    evidence: str                      # which documents and sections the numbers come from
+    caveats: str | None                # conflicts between documents, missing data
+
+
+class CapTableReading(BaseModel):
+    snapshot: CapTableSnapshot | None  # null when the documents do not describe a capitalization
+    note: str | None

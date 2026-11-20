@@ -1,0 +1,25 @@
+{% extends "base.html" %}{% load i18n vc %}
+{% block title %}{% translate "Cap table from documents" %} · {{ company.name }}{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div><p class="crumbs"><a href="{% url 'company_detail' company.pk %}">{{ company.name }}</a></p>
+    <h1>{% translate "Cap table from documents" %}</h1></div>
+</div>
+<form method="post" class="card narrow-form">{% csrf_token %}
+  <p>{% blocktranslate %}Choose the documents of one financing round. Claude reads them and proposes the whole cap table after the closing: share classes with their terms (preference, seniority, conversion), shares outstanding, option pool, warrants, the round and what we hold. You review it and click <strong>Accept</strong>; nothing is saved before.{% endblocktranslate %}</p>
+  <p class="muted small">{% blocktranslate %}The most useful: the Certificate of Incorporation (terms of each class), the Disclosure Schedule (capitalization table) and the Schedule of Purchasers (our shares). Up to {{ limit }} documents. Scanned images cannot be read. The documents are sent to Anthropic for the analysis.{% endblocktranslate %}</p>
+  {% regroup documents by folder as groups %}
+  {% for group in groups %}
+  <h3>{% if group.grouper %}📁 {{ group.grouper.name }}{% else %}{% translate "No folder" %}{% endif %}</h3>
+  <ul class="docs">
+    {% for d in group.list %}
+    <li><label><input type="checkbox" name="documents" value="{{ d.pk }}" {% if d.pk in preselected %}checked{% endif %}>
+      {{ d.title }} <span class="muted">{{ d.get_category_display }}{% if d.document_date %} · {{ d.document_date|date:"Y-m-d" }}{% endif %}</span></label></li>
+    {% endfor %}
+  </ul>
+  {% empty %}<p class="muted">{% translate "This company has no documents yet. Upload the financing documents first." %}</p>{% endfor %}
+  <div class="form-grid"><div class="actions span-all">
+    <button class="btn primary" type="submit" {% if not documents %}disabled{% endif %}>{% translate "Ask Claude to read them" %}</button>
+    <a class="btn" href="{% url 'company_detail' company.pk %}">{% translate "Cancel" %}</a></div></div>
+</form>
+{% endblock %}

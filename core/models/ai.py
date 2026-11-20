@@ -58,6 +58,7 @@ class AiJob(models.Model):
     class Kind(models.TextChoices):
         WEB_RESEARCH = "web_research", _("Web research")
         EMAIL = "email", _("Email analysis")
+        CAP_TABLE = "cap_table", _("Cap table from documents")
 
     class Status(models.TextChoices):
         QUEUED = "queued", _("Queued")
@@ -83,6 +84,7 @@ class AiJob(models.Model):
     input_tokens = models.IntegerField(_("input tokens"), default=0, db_default=0)
     output_tokens = models.IntegerField(_("output tokens"), default=0, db_default=0)
     web_searches = models.IntegerField(_("web searches"), default=0, db_default=0)
+    params = models.JSONField(_("parameters"), default=dict, blank=True, db_default={})
 
     class Meta:
         db_table = "ai_jobs"
@@ -90,7 +92,7 @@ class AiJob(models.Model):
         verbose_name = _("Claude job")
         verbose_name_plural = _("Claude jobs")
         constraints = [
-            models.CheckConstraint(condition=Q(kind__in=["web_research", "email"]), name="ai_jobs_kind_check"),
+            models.CheckConstraint(condition=Q(kind__in=["web_research", "email", "cap_table"]), name="ai_jobs_kind_check"),
             models.CheckConstraint(condition=Q(status__in=["queued", "running", "done", "failed"]),
                                    name="ai_jobs_status_check"),
         ]
@@ -121,6 +123,7 @@ class Suggestion(models.Model):
         CONTACT = "contact", _("Contact")
         PAST_ROUND = "past_round", _("Past financing round")
         NEWS = "news", _("News")
+        CAP_TABLE = "cap_table", _("Cap table")
         EVENT = "event", _("Upcoming event")
         FIGURES = "figures", _("Company figures")
 
@@ -155,7 +158,7 @@ class Suggestion(models.Model):
         constraints = [
             models.CheckConstraint(
                 condition=Q(target__in=["company_field", "deal_field", "deal_note", "participant", "contact",
-                                        "past_round", "news", "event", "figures"]),
+                                        "past_round", "news", "event", "figures", "cap_table"]),
                 name="suggestions_target_check",
             ),
             models.CheckConstraint(condition=Q(status__in=["pending", "accepted", "rejected"]),

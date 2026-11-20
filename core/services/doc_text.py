@@ -41,8 +41,11 @@ def _docx(data):
     return "\n".join(parts)
 
 
-def extract_text(data, filename="", mime_type=None):
-    """Text of the file, or None when there is none or the type is not readable."""
+def extract_text(data, filename="", mime_type=None, compact=True):
+    """Text of the file, or None when there is none or the type is not readable.
+
+    ``compact`` puts it on one line (what search needs); otherwise lines and table rows are kept for reading.
+    """
     if not data or len(data) > MAX_BYTES:
         return None
     suffix = PurePath(filename or "").suffix.lower()
@@ -60,5 +63,8 @@ def extract_text(data, filename="", mime_type=None):
         log.warning("Could not read the text of %s: %s", filename, exc)
         return None
     text = text.replace("\x00", " ")
-    text = " ".join(text.split())      # one line: search does not need the layout
-    return text[:MAX_CHARS] or None
+    if compact:
+        text = " ".join(text.split())      # one line: search does not need the layout
+    else:
+        text = "\n".join(line.strip() for line in text.splitlines() if line.strip())
+    return text[:MAX_CHARS * (1 if compact else 3)] or None

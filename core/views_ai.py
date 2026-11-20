@@ -15,7 +15,7 @@ from .models import AiJob, Company, Deal, InboundEmail, Suggestion
 
 
 # Most decision-relevant first.
-TARGET_ORDER = ["deal_field", "participant", "deal_note", "event", "figures", "past_round", "company_field", "contact",
+TARGET_ORDER = ["cap_table", "deal_field", "participant", "deal_note", "event", "figures", "past_round", "company_field", "contact",
                 "news"]
 
 
@@ -59,6 +59,8 @@ def research_start(request, company_pk):
 def _require_change(user, suggestion):
     needed = "core.change_deal" if suggestion.target in ("deal_field", "deal_note", "participant") \
         else "core.change_company"
+    if suggestion.target == "cap_table" and not user.has_perm("core.add_investment"):
+        raise PermissionDenied
     if not user.has_perm(needed):
         raise PermissionDenied
 
@@ -95,6 +97,41 @@ def suggestions_decide_all(request, company_pk, action):
         response["HX-Refresh"] = "true"
         return response
     return _card(request, company, _deal_from(request, company), error=" ".join(errors) or None)
+
+
+# --- Cap table from documents -----------------------------------------------------------
+
+MAX_CAP_DOCUMENTS = 12
+
+
+@permission_required("core.change_company", raise_exception=True)
+def cap_table_read(request, company_pk):
+    """Choose the financing documents Claude should read into a cap table proposal."""
+    company = get_object_or_404(Company, pk=company_pk)
+    if not request.user.has_perm("core.add_investment"):
+        raise PermissionDenied
+    if not settings.AI_ENABLED:
+        messages.error(request, "Claude is not configured: add ANTHROPIC_API_KEY to the .env file.")
+        return redirect("company_detail", pk=company.pk)
+    documents = list(company.documents.select_related("folder").order_by("folder__name", "-document_date", "title"))
+    preselected = {d.pk for d in documents if str(d.folder_id) == request.GET.get("folder")}
+    if request.method == "POST":
+        ids = [int(i) for i in request.POST.getlist("documents") if i.isdigit()]
+        chosen = [d.pk for d in documents if d.pk in ids]
+        if not chosen:
+            messages.error(request, "Choose at least one document.")
+        elif len(chosen) > MAX_CAP_DOCUMENTS:
+            messages.error(request, f"Choose at most {MAX_CAP_DOCUMENTS} documents: the certificate of incorporation, "
+                                    "the disclosure schedule and the schedule of purchasers are enough.")
+        else:
+            jobs.queue_cap_table(company, chosen, request.user)
+            messages.success(request, f"Claude is reading {len(chosen)} document(s). The proposal appears at the "
+                                      "bottom of this page in a few minutes.")
+            return redirect("company_detail", pk=company.pk)
+        preselected = set(chosen)
+    return render(request, "app/company/cap_table_read.html", {
+        "company": company, "documents": documents, "preselected": preselected, "limit": MAX_CAP_DOCUMENTS,
+        "nav_section": "portfolio" if company.status != "prospect" else "pipeline"})
 
 
 # --- Inbox --------------------------------------------------------------------------------
