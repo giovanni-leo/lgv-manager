@@ -193,3 +193,29 @@ class AuditLogTests(TestCase):
         entries = LogEntry.objects.get_for_object(co).order_by("timestamp")
         self.assertEqual([e.action for e in entries], [LogEntry.Action.CREATE, LogEntry.Action.UPDATE])
         self.assertEqual(entries.last().changes_dict["status"], ["portfolio", "exited"])
+
+
+class SpvInvestmentTests(TestCase):
+    """An interest in an SPV has no shares or share class of its own."""
+
+    def test_spv_interest_needs_no_shares_and_equity_still_does(self):
+        from datetime import date
+        from decimal import Decimal
+
+        from django.core.exceptions import ValidationError
+        from django.db import IntegrityError, transaction
+
+        from core.models import Company, InvestingEntity, Investment
+
+        co = Company.objects.create(name="Laza Medical")
+        entity = InvestingEntity.objects.create(name="Efficient Frontier Holding SA", kind="company")
+        spv = Investment(company=co, entity=entity, invest_date=date(2026, 11, 4), instrument="spv",
+                         amount=Decimal("250000"), currency="USD")
+        spv.full_clean()
+        spv.save()
+        equity = Investment(company=co, entity=entity, invest_date=date(2026, 11, 4), instrument="equity",
+                            amount=Decimal("1"), currency="USD")
+        with self.assertRaises(ValidationError):
+            equity.full_clean()
+        with self.assertRaises(IntegrityError), transaction.atomic():
+            equity.save()

@@ -136,6 +136,8 @@ The app creates the share class and the new shares, our investment, the option p
 
 For companies with several past rounds, record them in date order: the first with the shares outstanding before it, the next ones picking the class from the list. Rare cases (conversions, splits, buybacks, convertible loans) are entered in **Data**, or via **Edit classes and events** in the cap table card.
 
+An investment made through an **SPV or fund** (we hold an interest in the vehicle, not shares of the company) is entered in **Data › Investments** with instrument *Interest in an SPV / fund*: date, amount and currency, no shares and no share class. It does not appear in the company's cap table.
+
 ### Cap table from the documents
 
 For a closed round you can let Claude fill the cap table from the legal documents instead of typing it.

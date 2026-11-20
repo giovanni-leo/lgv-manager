@@ -190,6 +190,7 @@ class Investment(models.Model):
         CONVERTIBLE_LOAN = "convertible_loan", _("Convertible loan")
         SAFE = "safe", _("SAFE")
         WARRANT = "warrant", _("Warrant")
+        SPV = "spv", _("Interest in an SPV / fund")
 
     company = models.ForeignKey(Company, on_delete=models.CASCADE, related_name="investments",
                                 verbose_name=_("company"))
@@ -222,7 +223,7 @@ class Investment(models.Model):
         verbose_name_plural = _("investments")
         constraints = [
             models.CheckConstraint(
-                condition=Q(instrument__in=["equity", "convertible_loan", "safe", "warrant"]),
+                condition=Q(instrument__in=["equity", "convertible_loan", "safe", "warrant", "spv"]),
                 name="investments_instrument_check",
             ),
             models.CheckConstraint(
