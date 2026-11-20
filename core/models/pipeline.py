@@ -13,8 +13,8 @@ from .parties import CoInvestor, Company, Contact
 
 class DealStage(models.TextChoices):
     SOURCED = "sourced", _("Sourced")
-    FIRST_MEETING = "first_meeting", _("First meeting")
-    ANALYSIS = "analysis", _("Analysis")
+    FIRST_MEETING = "first_meeting", _("Qualified")
+    ANALYSIS = "analysis", _("Review")
     DUE_DILIGENCE = "due_diligence", _("Due diligence")
     TERM_SHEET = "term_sheet", _("Term sheet")
     INVESTED = "invested", _("Invested")

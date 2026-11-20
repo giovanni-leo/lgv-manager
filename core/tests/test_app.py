@@ -148,7 +148,7 @@ class PageTests(TestCase):
 
     def test_pipeline_shows_the_deal_in_its_stage(self):
         html = self.client.get("/pipeline/").content.decode()
-        analysis = html.split(">Analysis")[1].split('class="column"')[0]
+        analysis = html.split(">Review")[1].split('class="column"')[0]
         self.assertIn("CardioSense SA", analysis)
         self.assertIn("in 5 days", analysis)
 

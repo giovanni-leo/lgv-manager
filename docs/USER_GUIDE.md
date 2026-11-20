@@ -55,7 +55,7 @@ The deal page holds everything needed to decide on a round; open it from **Pipel
 
 | Card | What it shows and how to use it |
 | --- | --- |
-| **Stage** (top right) | Move the deal through Sourced, First meeting, Analysis, Due diligence, Term sheet, Invested, or On hold / Passed. Every change is logged with its date. |
+| **Stage** (top right) | Move the deal through Sourced, Qualified, Review, Due diligence, Term sheet, Invested, or On hold / Passed. Every change is logged with its date. |
 | **Round** | Round size, pre-money, post-money (calculated), deadline with countdown, our ticket and the stake it implies. **Edit** to change. |
 | **About** the company | Description, sector, location, website, last financing round; **Company page** opens the full summary. |
 | **Next step** | What to do next and by when; overdue steps turn red here and on **Home**. |
