@@ -86,3 +86,29 @@ class IsoDateTests(TestCase):
             form = InteractionForm({"occurred_on": text, "kind": "note", "summary": "x"})
             self.assertTrue(form.is_valid(), text)
             self.assertEqual(str(form.cleaned_data["occurred_on"]), "2026-03-07")
+
+
+class PeopleOrderTests(TestCase):
+    def test_role_rank_order(self):
+        from core.services.people import role_rank
+
+        roles = ["CEO", "Chief Executive Officer & Co-founder", "CFO", "Chief Financial Officer", "COO", "CTO",
+                 "Chief Medical Officer", "VP Engineering", "Chairman of the Board", "Chairperson", "Board member",
+                 "Non-executive director", "Scientific advisor", "KOL advisor", None, "Receptionist"]
+        ranks = [role_rank(r) for r in roles]
+        self.assertEqual(ranks, [0, 0, 1, 1, 2, 2, 2, 3, 4, 4, 5, 5, 6, 6, 7, 7])
+        self.assertEqual(role_rank("Chairman & CEO"), 0)
+
+    def test_company_page_lists_ceo_cfo_c_board_then_advisors(self):
+        from core.models import Company, Contact
+
+        co = Company.objects.create(name="NeuroPath SA")
+        for name, role in [("Zed Advisor", "Clinical advisor"), ("Ann Board", "Board member"), ("Bob CTO", "CTO"),
+                           ("Cy Chair", "Chairman"), ("Di CFO", "CFO"), ("Eve CEO", "CEO"), ("Fay None", None)]:
+            Contact.objects.create(company=co, full_name=name, role=role)
+        admin = User.objects.create_superuser("g", "g@example.com", "a-long-test-password")
+        verified_client(self.client, admin)
+        page = self.client.get(f"/companies/{co.pk}/")
+        order = [page.content.decode().index(n) for n in ("Eve CEO", "Di CFO", "Bob CTO", "Cy Chair", "Ann Board",
+                                                          "Zed Advisor", "Fay None")]
+        self.assertEqual(order, sorted(order))

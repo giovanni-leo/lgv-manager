@@ -155,7 +155,7 @@ The company page is the summary of everything we know about a company; its cards
 
 | Card | What it shows |
 | --- | --- |
-| **Overview** | Description, sector, location, website, legal name, last financing round, key people, next event, number of documents. **Edit** to change. |
+| **Overview** | Description, sector, location, website, legal name, last financing round, key people, next event, number of documents. **Edit** to change. Key people and contacts are listed by role: CEO, CFO and other C-level first, then other management, the chairperson and board members, then advisors (the order comes from the *Role* text of each contact). |
 | **Our position** | Stake fully diluted and basic, invested (CHF), value of our stake, multiple, IRR. |
 | **Company** | Company value from the latest valuation; runway from the latest figures (cash ÷ monthly burn, less the months since); cash, burn, revenue, headcount. **+ Valuation** and **+ Figures** add new ones. |
 | **Governance and reporting** | Our board role, reporting frequency, last report, last and next general assembly, data room link. |

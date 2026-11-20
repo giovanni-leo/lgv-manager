@@ -18,6 +18,7 @@ from .models import (FUNNEL_STAGES, CoInvestor, Company, Contact, Deal, DealStag
                      Interaction, RoundParticipant)
 from .sections import SECTIONS, formfield
 from .services.exit import exit_analysis
+from .services.people import sort_people
 from .services.ownership import consistency_warnings
 from .services.portfolio import (company_summary, deal_summary, known_investors, portfolio_totals,
                                  report_documents, runway, timeline)
@@ -90,7 +91,7 @@ def _deal_contacts(deal, participants):
             seen.add(contact.pk)
             rows.append({"contact": contact, "label": label})
 
-    for c in deal.company.contacts.all():
+    for c in sort_people(deal.company.contacts.all()):
         add(c, deal.company.name)
     add(deal.source_contact, "Source")
     for p in participants:
@@ -158,7 +159,7 @@ def company_context(request, company):
         "realizations": company.realizations.order_by("-realized_on"),
         "events": timeline(company=company),
         "reports": report_documents(company),
-        "contacts": [{"contact": c, "label": ""} for c in company.contacts.all()],
+        "contacts": [{"contact": c, "label": ""} for c in sort_people(company.contacts.all())],
         "funding_rounds": funding_rounds,
         "investors": known_investors(company),
         "documents": company.documents.filter(folder__isnull=True).order_by("-document_date", "-uploaded_at")[:15],
