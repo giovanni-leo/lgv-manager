@@ -29,10 +29,13 @@ The menu at the top right is the same on every page.
 | **Home** | What needs attention: deadlines in the next 14 days (overdue in red), runway alerts, upcoming general assemblies, recent financing rounds, recent activity |
 | **Pipeline** | All deals in columns by stage, from Sourced to Invested; On hold and Passed are folded below |
 | **Portfolio** | Our portfolio companies with stake, invested amount, value, multiple, IRR, runway, last report and next general assembly, with totals |
+| **Documents** | Every document of every company: search inside the files, filter by company, category, folder and year |
 | **Inbox** | Emails sent to the app and what was done with them; upload of saved emails |
 | **Data** | Every table with every field, for rare cases and corrections |
 | **Manual** | This guide |
 | **Security** | Your two-factor authentication and backup tokens |
+
+Dates are always written **YYYY-MM-DD** (for example 2026-11-20), in the pages and when you type them.
 
 Most cards on a page have an **Edit** button: the card turns into a small form, you change the values and click **Save**, without leaving the page.
 
@@ -98,7 +101,11 @@ What happens next:
 2. The company is matched by name or website, or created if it is new; its open deal is used, or a new one is created under *Sourced*.
 3. Attachments are saved in **Documents** and the email is logged in **Activity and events**.
 4. Round size, pre-money, deadline, investors, contacts and key terms appear as suggestions on the deal page, to accept or reject.
+   Upcoming **general assemblies, board meetings** and other dated meetings in the email or its attachments appear as suggestions too: after **Accept** they are in **Activity and events** and in **Home** under *Upcoming assemblies and meetings*. Cash, burn, revenue and headcount stated in a report become suggested **Figures**.
+   Claude puts attachments that belong together in a **folder** (for example *Series B* or *Board 2026-03*) and gives each a category.
 5. No web search starts on its own: use **Search the web** on the company page if you want one (section 5).
+
+An email from a portfolio company with a report or a convocation does not open a new deal; one about a financing round does.
 
 Tips: one company per email; put its name in the subject; send documents as PDF (Word files are saved but not read). Emails forwarded from founders or other investors work too.
 
@@ -128,6 +135,17 @@ The app creates the share class and the new shares, our investment, the option p
 
 For companies with several past rounds, record them in date order: the first with the shares outstanding before it, the next ones picking the class from the list. Rare cases (conversions, splits, buybacks, convertible loans) are entered in **Data**, or via **Edit classes and events** in the cap table card.
 
+### Cap table from the documents
+
+For a closed round you can let Claude fill the cap table from the legal documents instead of typing it.
+
+1. Upload the documents of the closing to the company (**Documents › Upload**; put them in one folder, for example *Series B*). The most useful: the **Certificate of Incorporation**, the **Disclosure Schedule** and the **Schedule of Purchasers**.
+2. In the **Cap table today** card click **Read from documents** (or **Read cap table** on the folder), tick the documents and click **Ask Claude to read them**.
+3. After a few minutes a suggestion appears at the bottom of the page. Click **Show the proposed cap table** to check classes, prices, liquidation preference and seniority, shares outstanding, option pool, warrants and our holdings.
+4. **Accept** records only what is missing: new classes, new shares, the option pool, the round in the funding history, the valuation and our investments. If the documents disagree with what is already recorded (fewer shares, a different fully diluted total, an investing entity that does not exist), nothing is saved and the card explains what to correct first.
+
+For several rounds, read the documents of the oldest first.
+
 ## 8. The company page and the portfolio
 
 The company page is the summary of everything we know about a company; its cards follow the company's phase.
@@ -144,6 +162,7 @@ The company page is the summary of everything we know about a company; its cards
 | **Funding history** | Every known round: date, amount, pre- and post-money, investors (lead marked), source. |
 | **Investors** | Every known investor, the rounds they joined, and their status in the current round. |
 | **Cap table today** | Shares per class, ours, % of class; stake fully diluted and basic; checks when something does not add up. |
+| **If the company is sold** | Type a sale price (for example *100M*) to see who receives what, using each class's liquidation preference, seniority and conversion, and what we receive and its multiple. Without a price it shows 0.25× to 4× the latest valuation and the sale price from which we get our money back. |
 
 How the figures are calculated:
 
@@ -152,6 +171,12 @@ How the figures are calculated:
 - **Runway:** below 12 months it turns orange, below 6 red, and appears on **Home**.
 
 To record a report received or a general assembly, add it in **Activity and events** with type *Report received* or *General assembly*; a future date is shown as the next assembly. The **Portfolio** page lists all portfolio companies with these figures and the totals.
+
+## Documents
+
+The **Documents** page finds any document of any company. Type words in the search box: Claude's PDFs and Word files are searched **inside**, the matching words are highlighted, and scanned images can only be found by title or file name. Filter by company, category (investor report, board material, charter…), folder and year.
+
+Folders keep documents that belong together, such as all the papers of a financing round. Create one in **Documents › New folder**, and choose it in the document's **Folder** field. On the company page the folders are listed in the **Documents** card.
 
 ## 9. Users, roles and the Data section
 

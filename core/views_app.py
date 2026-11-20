@@ -17,6 +17,7 @@ from django.views.decorators.http import require_POST
 from .models import (FUNNEL_STAGES, CoInvestor, Company, Contact, Deal, DealStage, Document, FundingRound,
                      Interaction, RoundParticipant)
 from .sections import SECTIONS, formfield
+from .services.exit import exit_analysis
 from .services.ownership import consistency_warnings
 from .services.portfolio import (company_summary, deal_summary, known_investors, portfolio_totals,
                                  report_documents, runway, timeline)
@@ -144,6 +145,7 @@ def company_context(request, company):
     funding_rounds = list(company.funding_rounds.prefetch_related("investors__co_investor"))
     show_portfolio = company.status != Company.Status.PROSPECT or company.investments.exists()
     return {**suggestions_context(company),
+        "exit": exit_analysis(company, request.GET.get("exit")) if show_portfolio else None,
         "show_portfolio": show_portfolio,
         "nav_section": "portfolio" if show_portfolio else "pipeline",
         "latest_round": funding_rounds[0] if funding_rounds else None,

@@ -186,6 +186,12 @@ con `docker compose up`.
 
 ## 7. Aggiornare l'applicazione
 
+Dopo l'aggiornamento del 20 novembre 2026 (ricerca nei documenti), una volta sola, per rendere ricercabili i documenti già caricati:
+
+```sh
+sudo docker compose exec app python manage.py extract_document_text
+```
+
 ```sh
 cd ~/vc-manager
 git pull

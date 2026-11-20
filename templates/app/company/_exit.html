@@ -1,0 +1,45 @@
+{% load i18n vc %}{% if exit %}
+<section class="card wide" id="exit-card">
+  <details {% if exit.chosen or exit.bad_input %}open{% endif %}>
+    <summary><h2>{% translate "If the company is sold" %}</h2>
+      {% if exit.base %}<span class="muted small">{% blocktranslate with v=exit.base|money:exit.currency d=exit.base_date|date:"Y-m-d" %}latest valuation {{ v }} ({{ d }}){% endblocktranslate %}</span>{% endif %}</summary>
+
+    <form method="get" action="#exit-card" class="quick-add">
+      <label class="muted small">{% translate "Sale price of the whole company" %} ({{ exit.currency }})</label>
+      <input type="text" name="exit" value="{{ exit.default_text }}" placeholder="e.g. 100M" size="14" inputmode="decimal">
+      <button class="btn small" type="submit">{% translate "Calculate" %}</button>
+    </form>
+    {% if exit.bad_input %}<p class="notice">{% translate "Enter an amount such as 100M, 2.5bn or 120'000'000." %}</p>{% endif %}
+
+    {% if exit.scenarios %}
+    <div class="table-scroll"><table class="list">
+      <thead><tr><th>{% translate "Sale price" %}</th><th class="num">{% translate "Our proceeds" %}</th><th class="num">{% translate "Multiple" %}</th></tr></thead>
+      <tbody>{% for r in exit.scenarios %}
+        <tr><td>{{ r.exit_value|money:exit.currency }} <span class="muted small">({{ r.factor|floatformat:"-2" }}× {% translate "valuation" %})</span></td>
+          <td class="num">{{ r.payout|money:exit.currency }}</td><td class="num">{{ r.multiple|multiple }}</td></tr>
+      {% endfor %}</tbody>
+    </table></div>
+    {% endif %}
+
+    {% if exit.detail %}
+    <h3>{% blocktranslate with v=exit.detail.exit_value|money:exit.currency %}Sale for {{ v }}: who receives what{% endblocktranslate %}</h3>
+    <div class="table-scroll"><table class="list">
+      <thead><tr><th>{% translate "Class" %}</th><th class="num">{% translate "Preference" %}</th><th class="num">{% translate "Receives" %}</th><th class="num">{% translate "Per share" %}</th><th class="num">{% translate "Ours" %}</th></tr></thead>
+      <tbody>{% for r in exit.detail.rows %}
+        <tr><td>{{ r.name }}{% if r.converted %} <span class="badge">{% translate "converts to common" %}</span>{% endif %}</td>
+          <td class="num">{% if r.preference %}{{ r.preference|money:exit.currency }}{% else %}–{% endif %}</td>
+          <td class="num">{{ r.payout|money:exit.currency }}</td><td class="num">{{ r.per_share|floatformat:2 }}</td>
+          <td class="num">{% if r.my_payout %}{{ r.my_payout|money:exit.currency }}{% else %}–{% endif %}</td></tr>
+      {% endfor %}</tbody>
+      <tfoot><tr><th colspan="4">{% translate "Our proceeds" %}</th><th class="num">{{ exit.detail.my_payout|money:exit.currency }}{% if exit.detail_multiple %} · {{ exit.detail_multiple|multiple }}{% endif %}</th></tr></tfoot>
+    </table></div>
+    {% endif %}
+
+    <p class="muted small">
+      {% if exit.breakeven %}{% blocktranslate with v=exit.breakeven|money:exit.currency %}We get our money back (1×) from a sale price of about {{ v }}. {% endblocktranslate %}{% endif %}
+      {% translate "Calculated with the terms of each share class: liquidation preference, seniority, participation and conversion. Options and warrants count as common shares, without their exercise price. A sale of the whole company; no debt, fees or escrow." %}
+    </p>
+    {% for w in exit.warnings %}<p class="notice small">{{ w }}</p>{% endfor %}
+  </details>
+</section>
+{% endif %}
