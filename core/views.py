@@ -10,12 +10,13 @@ from django.shortcuts import get_object_or_404, render
 from django.utils.safestring import mark_safe
 
 from .models import Document
+from .version import version_string
 
 
 def healthz(request):
     with connection.cursor() as cursor:
         cursor.execute("SELECT 1")
-    return JsonResponse({"status": "ok"})
+    return JsonResponse({"status": "ok", "version": version_string()})
 
 
 MANUAL_PATH = Path(settings.BASE_DIR) / "docs" / "USER_GUIDE.md"

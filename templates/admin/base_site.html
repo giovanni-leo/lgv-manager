@@ -6,4 +6,5 @@
 {% block extrastyle %}{{ block.super }}<link rel="stylesheet" href="{% static 'css/topbar.css' %}">
 <link rel="stylesheet" href="{% static 'css/admin.css' %}">{% endblock %}
 {# Same top menu as every other page instead of the admin's own header. #}
+{% block footer %}<footer class="app-version">{{ SITE_NAME }} · {{ APP_VERSION }}</footer>{% endblock %}
 {% block header %}{% if not is_popup %}{% include "_topbar.html" %}{% endif %}{% endblock %}

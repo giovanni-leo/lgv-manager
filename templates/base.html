@@ -17,5 +17,6 @@
   {% block content_wrapper %}<main>
     {% if messages %}<ul class="messages">{% for m in messages %}<li class="{{ m.tags }}">{{ m }}</li>{% endfor %}</ul>{% endif %}
     {% block content %}{% endblock %}</main>{% endblock %}
+  <footer class="app-version">{{ SITE_NAME }} · {{ APP_VERSION }}</footer>
 </body>
 </html>

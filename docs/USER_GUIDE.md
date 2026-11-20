@@ -7,6 +7,7 @@ LGV Manager is the fund's app for tracking **deals** (the pipeline) and **portfo
 - **Where:** in a browser at <https://leo.internet-box.ch>, on a computer, phone or iPad. Nothing to install.
 - **What you need:** a user account created by the administrator, and an authenticator app on your phone (Microsoft or Google Authenticator).
 - **Conventions:** button and card names are in **bold**, as they appear on screen.
+- **Version:** the version of the running app is at the bottom of every page, for example *v1.0.151 (b9a1d70, 2026-11-21)*: the number, the commit and its date. Use it to check that an update has arrived.
 - **Claude:** whatever Claude finds on the web or reads in an email arrives as a **suggestion**. It becomes data only when someone clicks **Accept**.
 
 ## 1. First login

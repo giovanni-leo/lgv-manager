@@ -66,6 +66,12 @@ if grep -q "compose.local-data.yml" .env; then
   $SUDO chown 1000:1000 data/media
 fi
 
+# Which code is being built, shown in the footer of every page (see core/version.py).
+if command -v git >/dev/null 2>&1 && git rev-parse --git-dir >/dev/null 2>&1; then
+  printf '{"count": "%s", "commit": "%s", "date": "%s"}\n' "$(git rev-list --count HEAD)" \
+    "$(git rev-parse --short HEAD)" "$(git log -1 --format=%cs)" > build_info.json
+fi
+
 echo "Building and starting the application (a few minutes the first time)..."
 $SUDO docker compose up -d --build
 
