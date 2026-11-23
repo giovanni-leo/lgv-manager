@@ -27,6 +27,7 @@ urlpatterns = [
     path("pipeline/", views_app.pipeline, name="pipeline"),
     path("deals/new/", views_app.deal_new, name="deal_new"),
     path("deals/<int:pk>/", views_app.deal_detail, name="deal_detail"),
+    path("deals/<int:pk>/merge/", views_merge.deal_merge, name="deal_merge"),
     path("deals/<int:pk>/stage/", views_app.deal_stage, name="deal_stage"),
     path("deals/<int:pk>/participants/", views_app.participant_add, name="participant_add"),
     path("participants/<int:pk>/delete/", views_app.participant_delete, name="participant_delete"),

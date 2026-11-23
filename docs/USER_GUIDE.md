@@ -187,6 +187,15 @@ Everything of the duplicate moves to the company you keep: deals, contacts, docu
 
 If **both** companies already have a cap table, the merge is refused, because the shares would be counted twice: delete the cap table of the duplicate first.
 
+### A deal that appears twice
+
+The **Pipeline** shows one card per **deal**, not per company: a company with two deals (for example the same round entered twice, or one created by an email) appears twice, while **Portfolio** lists it once. To merge two deals of the same company:
+
+1. Open the deal you want to **keep** (click its card) and click **Merge a duplicate deal…**.
+2. Choose the other deal of the same company, click **Show what moves**, then **Merge the duplicate into this deal**.
+
+Investors, documents, events, suggestions and investments of the duplicate move to the kept deal; investors present in both are combined; empty details (round size, pre-money, ticket, deadline, next step, notes) are filled from the duplicate. The stage of the kept deal does not change. Do not delete a deal from **Data** instead: its documents and events would be deleted with it.
+
 ## Documents
 
 The **Documents** page finds any document of any company. Type words in the search box: Claude's PDFs and Word files are searched **inside**, the matching words are highlighted, and scanned images can only be found by title or file name. Filter by company, category (investor report, board material, charter…), folder and year.

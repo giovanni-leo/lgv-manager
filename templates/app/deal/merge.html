@@ -1,0 +1,34 @@
+{% extends "base.html" %}{% load i18n vc %}
+{% block title %}{% translate "Merge a duplicate deal" %} · {{ company.name }}{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div><p class="crumbs"><a href="{% url 'pipeline' %}">{% translate "Pipeline" %}</a> › <a href="{% url 'deal_detail' deal.pk %}">{{ company.name }}{% if deal.round_name %} · {{ deal.round_name }}{% endif %}</a></p>
+    <h1>{% translate "Merge a duplicate deal" %}</h1></div>
+</div>
+<div class="card narrow-form">
+  <p>{% blocktranslate with name=company.name stage=deal.get_stage_display %}This deal of <strong>{{ name }}</strong> ({{ stage }}) is kept. Choose the other deal of the same company that is a duplicate: everything it holds moves here, and it is then deleted.{% endblocktranslate %}</p>
+  {% if not others %}<p class="notice">{% translate "This company has no other deal." %}</p>{% else %}
+  <form method="get" class="quick-add">
+    <select name="source" required>
+      <option value="">{% translate "— the duplicate —" %}</option>
+      {% for d in others %}<option value="{{ d.pk }}" {% if source and source.pk == d.pk %}selected{% endif %}>{{ d.round_name|default:"(no round)" }} · {{ d.get_stage_display }} · {{ d.opened_on|date:"Y-m-d" }}</option>{% endfor %}
+    </select>
+    <button class="btn" type="submit">{% translate "Show what moves" %}</button>
+  </form>
+  {% endif %}
+  {% if source %}
+  <div class="grid">
+    <div><h3>{% translate "The duplicate: moves here" %}</h3>
+      <ul class="docs">{% for label, n in source_counts %}<li>{{ n }} <span class="muted">{{ label|lower }}</span></li>{% empty %}<li class="muted">{% translate "Nothing: it is empty." %}</li>{% endfor %}</ul></div>
+    <div><h3>{% translate "This deal: already has" %}</h3>
+      <ul class="docs">{% for label, n in keep_counts %}<li>{{ n }} <span class="muted">{{ label|lower }}</span></li>{% empty %}<li class="muted">{% translate "Nothing yet." %}</li>{% endfor %}</ul></div>
+  </div>
+  <p class="muted small">{% translate "Investors found in both deals are combined. Details that are empty in this deal (round size, pre-money, ticket, deadline, next step, notes) are filled from the duplicate. The stage of this deal does not change. This cannot be undone." %}</p>
+  <form method="post">{% csrf_token %}
+    <input type="hidden" name="source" value="{{ source.pk }}">
+    <button class="btn primary" type="submit" name="confirm" value="1">{% translate "Merge the duplicate into this deal" %}</button>
+    <a class="btn" href="{% url 'deal_detail' deal.pk %}">{% translate "Cancel" %}</a>
+  </form>
+  {% endif %}
+</div>
+{% endblock %}

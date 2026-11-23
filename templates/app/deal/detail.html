@@ -8,6 +8,7 @@
     <h1>{{ company.name }}{% if deal.round_name %} <span class="muted">{{ deal.round_name }}</span>{% endif %}</h1>
     <p class="muted">{{ company.sector|default:"" }}{% if company.sector and company.city %} · {% endif %}{{ company.city|default:"" }}</p>
   </div>
+  {% if perms.core.delete_deal and perms.core.change_deal %}<a class="btn subtle" href="{% url 'deal_merge' deal.pk %}">{% translate "Merge a duplicate deal…" %}</a>{% endif %}
   <form class="stage-picker" hx-post="{% url 'deal_stage' deal.pk %}" hx-trigger="change">
     <label><span>{% translate "Stage" %}</span>
       <select name="stage" {% if not perms.core.change_deal %}disabled{% endif %}>
