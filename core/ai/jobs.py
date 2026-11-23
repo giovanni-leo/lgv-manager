@@ -243,7 +243,8 @@ def _domain(url_or_email):
 def match_company(name, website):
     key, domain = _company_key(name) if name else None, _domain(website)
     for company in Company.objects.all():
-        if key and _company_key(company.name) == key:
+        names = [company.name, *(company.aliases or "").splitlines()]
+        if key and any(_company_key(n) == key for n in names if n.strip()):
             return company
         if domain and _domain(company.website) == domain:
             return company

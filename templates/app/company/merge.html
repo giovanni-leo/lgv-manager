@@ -1,0 +1,37 @@
+{% extends "base.html" %}{% load i18n vc %}
+{% block title %}{% translate "Merge a duplicate" %} · {{ target.name }}{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div><p class="crumbs"><a href="{% url 'company_detail' target.pk %}">{{ target.name }}</a></p>
+    <h1>{% translate "Merge a duplicate company" %}</h1></div>
+</div>
+<div class="card narrow-form">
+  <p>{% blocktranslate with name=target.name %}<strong>{{ name }}</strong> is kept. Choose the company that appears twice: everything it holds moves here, and it is then deleted.{% endblocktranslate %}</p>
+  <form method="get" class="quick-add">
+    <select name="source" required>
+      <option value="">{% translate "— the duplicate —" %}</option>
+      {% for c in others %}<option value="{{ c.pk }}" {% if source and source.pk == c.pk %}selected{% endif %}>{{ c.name }}{% if c.status != "prospect" %} ({{ c.get_status_display }}){% endif %}</option>{% endfor %}
+    </select>
+    <button class="btn" type="submit">{% translate "Show what moves" %}</button>
+  </form>
+
+  {% if source %}
+  <div class="grid">
+    <div><h3>{% blocktranslate with name=source.name %}{{ name }}: moves to {{ target.name }}{% endblocktranslate %}</h3>
+      <ul class="docs">{% for label, n in source_counts %}<li>{{ n }} <span class="muted">{{ label|lower }}</span></li>{% empty %}<li class="muted">{% translate "Nothing: it is empty." %}</li>{% endfor %}</ul></div>
+    <div><h3>{% blocktranslate with name=target.name %}{{ name }}: already has{% endblocktranslate %}</h3>
+      <ul class="docs">{% for label, n in target_counts %}<li>{{ n }} <span class="muted">{{ label|lower }}</span></li>{% empty %}<li class="muted">{% translate "Nothing yet." %}</li>{% endfor %}</ul></div>
+  </div>
+  {% if problem %}
+  <p class="notice">{{ problem }}</p>
+  {% else %}
+  <p class="muted small">{% blocktranslate with name=source.name %}Identical documents are kept once, the same funding round found twice becomes one, and empty details of {{ target.name }} are filled from “{{ name }}”. The name “{{ name }}” is added to the other names of {{ target.name }}. This cannot be undone.{% endblocktranslate %}</p>
+  <form method="post">{% csrf_token %}
+    <input type="hidden" name="source" value="{{ source.pk }}">
+    <button class="btn primary" type="submit" name="confirm" value="1">{% blocktranslate with name=source.name %}Merge “{{ name }}” into {{ target.name }}{% endblocktranslate %}</button>
+    <a class="btn" href="{% url 'company_detail' target.pk %}">{% translate "Cancel" %}</a>
+  </form>
+  {% endif %}
+  {% endif %}
+</div>
+{% endblock %}

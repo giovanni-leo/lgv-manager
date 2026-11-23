@@ -11,6 +11,7 @@
     {% if company.data_room_url %}<a class="btn" href="{{ company.data_room_url }}" target="_blank" rel="noopener">{% translate "Data room" %} ↗</a>{% endif %}
     {% if perms.core.add_investment and perms.core.change_company %}<a class="btn" href="{% url 'record_round' company.pk %}">{% translate "Record a financing round" %}</a>{% endif %}
     {% if perms.core.add_deal %}<a class="btn" href="{% url 'deal_new' %}?company={{ company.pk }}">{% translate "New deal" %}</a>{% endif %}
+    {% if perms.core.delete_company and perms.core.change_company %}<a class="btn subtle" href="{% url 'company_merge' company.pk %}">{% translate "Merge a duplicate…" %}</a>{% endif %}
   </div>
 </div>
 

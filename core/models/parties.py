@@ -64,6 +64,9 @@ class Company(models.Model):
 
     name = models.TextField(_("name"))
     legal_name = models.TextField(_("legal name"), blank=True, null=True)
+    aliases = models.TextField(_("other names"), blank=True, null=True,
+                               help_text=_("One per line. An email or a search that uses one of these names is "
+                                           "recognised as this company (filled in when two companies are merged)."))
     country = models.CharField(_("country"), max_length=2, blank=True, null=True,
                                help_text=_("ISO 3166 two-letter code, e.g. CH"))
     city = models.TextField(_("city"), blank=True, null=True)

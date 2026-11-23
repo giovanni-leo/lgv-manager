@@ -175,6 +175,18 @@ How the figures are calculated:
 
 To record a report received or a general assembly, add it in **Activity and events** with type *Report received* or *General assembly*; a future date is shown as the next assembly. The **Portfolio** page lists all portfolio companies with these figures and the totals.
 
+## A company that appears twice
+
+Sometimes an email or a search creates a second company for one that already exists, for example under a slightly different name. To merge them:
+
+1. Open the company you want to **keep**.
+2. Click **Merge a duplicate…** (top right) and choose the duplicate in the list.
+3. Click **Show what moves**: you see what each company holds. Then click **Merge … into …**.
+
+Everything of the duplicate moves to the company you keep: deals, contacts, documents and folders, events, funding rounds, investments, cap table, suggestions. Identical documents are kept once, and a funding round found twice becomes one. Details that were empty are filled in, and the duplicate's name is saved in the company's *Other names* (Data › Companies), so the next email using that name goes to the right company. It cannot be undone.
+
+If **both** companies already have a cap table, the merge is refused, because the shares would be counted twice: delete the cap table of the duplicate first.
+
 ## Documents
 
 The **Documents** page finds any document of any company. Type words in the search box: Claude's PDFs and Word files are searched **inside**, the matching words are highlighted, and scanned images can only be found by title or file name. Filter by company, category (investor report, board material, charter…), folder and year.
