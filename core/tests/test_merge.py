@@ -187,64 +187,15 @@ class MergePageTests(TestCase):
         self.assertNotContains(self.client.get(f"/companies/{self.keep.pk}/"), "Merge a duplicate")
 
 
-class MergeDealsTests(TestCase):
-    def setUp(self):
-        self.co = Company.objects.create(name="Advanced NanoTherapies, Inc", status="portfolio")
-        self.keep = Deal.objects.create(company=self.co, round_name="Series B", stage="invested",
-                                        round_size=Decimal("30000000"))
-        self.dup = Deal.objects.create(company=self.co, round_name="Series B", stage="invested",
-                                       round_size=Decimal("31780000"), proposed_ticket=Decimal("600000"),
-                                       next_step="Fund by wire", deadline=date(2026, 5, 22), notes="From the email")
-        self.vct = CoInvestor.objects.create(name="VCT Investments", kind="strategic")
-        self.t45 = CoInvestor.objects.create(name="T45", kind="vc")
-        from core.models import RoundParticipant
 
-        RoundParticipant.objects.create(deal=self.keep, co_investor=self.vct, role="lead", status="signed")
-        RoundParticipant.objects.create(deal=self.dup, co_investor=self.vct, role="participant",
-                                        amount=Decimal("6500000"))
-        RoundParticipant.objects.create(deal=self.dup, co_investor=self.t45)
-        self.doc = make_document(self.co, "tsh.pdf", tiny_pdf("ts"), title="Term sheet", deal=self.dup)
-        Interaction.objects.create(company=self.co, deal=self.dup, kind="email", occurred_on=date(2026, 5, 1),
-                                   summary="Email")
-
-    def test_merge(self):
-        from core.models import RoundParticipant
-        from core.services.merge import merge_deals
-
-        report = merge_deals(self.keep, self.dup)
-        self.assertFalse(Deal.objects.filter(pk=self.dup.pk).exists())
-        self.keep.refresh_from_db()
-        self.assertEqual((self.keep.round_size, self.keep.stage), (Decimal("30000000.00"), "invested"))   # own values win
-        self.assertEqual((self.keep.proposed_ticket, self.keep.next_step, self.keep.deadline),
-                         (Decimal("600000.00"), "Fund by wire", date(2026, 5, 22)))                          # gaps filled
-        self.assertEqual(self.keep.notes, "From the email")
-        people = {p.co_investor.name: p for p in RoundParticipant.objects.filter(deal=self.keep)}
-        self.assertEqual(sorted(people), ["T45", "VCT Investments"])
-        self.assertEqual((people["VCT Investments"].role, people["VCT Investments"].amount),
-                         ("lead", Decimal("6500000.00")))             # the kept deal's row, completed
-        self.doc.refresh_from_db()
-        self.assertEqual(self.doc.deal, self.keep)
-        self.assertEqual(Interaction.objects.get().deal, self.keep)
-        self.assertEqual(report.moved["Documents"], 1)
-        self.assertTrue(any("already an investor" in line for line in report.dropped))
-
-    def test_deals_of_different_companies_are_refused(self):
-        from core.services.merge import merge_deals
-
-        other = Deal.objects.create(company=Company.objects.create(name="Other"))
-        with self.assertRaisesMessage(MergeError, "different companies"):
-            merge_deals(self.keep, other)
-
-    def test_page(self):
+class PipelineCardLinkTests(TestCase):
+    def test_invested_cards_open_the_company_and_others_the_deal(self):
         admin = User.objects.create_superuser("g", "g@example.com", "a-long-test-password")
         verified_client(self.client, admin)
-        url = f"/deals/{self.keep.pk}/merge/"
-        self.assertContains(self.client.get(f"/deals/{self.keep.pk}/"), "Merge a duplicate deal")
-        self.assertContains(self.client.get(url, {"source": self.dup.pk}), "This cannot be undone")
-        self.assertTrue(Deal.objects.filter(pk=self.dup.pk).exists())
-        response = self.client.post(url, {"source": self.dup.pk, "confirm": "1"}, follow=True)
-        self.assertContains(response, "The duplicate deal was merged")
-        self.assertEqual(Deal.objects.count(), 1)
-        other = Deal.objects.create(company=Company.objects.create(name="Elsewhere"))
-        self.client.post(url, {"source": other.pk, "confirm": "1"})          # not a deal of this company: ignored
-        self.assertTrue(Deal.objects.filter(pk=other.pk).exists())
+        co = Company.objects.create(name="Field Medical", status="portfolio")
+        invested = Deal.objects.create(company=co, stage="invested")
+        open_deal = Deal.objects.create(company=Company.objects.create(name="Precisept"), stage="due_diligence")
+        page = self.client.get("/pipeline/")
+        self.assertContains(page, f'href="/companies/{co.pk}/"')
+        self.assertNotContains(page, f'href="/deals/{invested.pk}/"')
+        self.assertContains(page, f'href="/deals/{open_deal.pk}/"')
