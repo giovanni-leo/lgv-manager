@@ -175,6 +175,16 @@ How the figures are calculated:
 
 To record a report received or a general assembly, add it in **Activity and events** with type *Report received* or *General assembly*; a future date is shown as the next assembly. The **Portfolio** page lists all portfolio companies with these figures and the totals.
 
+## Funds
+
+The app manages several **funds** (today EFH in US dollars, LGV1 in Swiss francs and LGV2 in euros); each has its own currency and its own portfolio. Their names and currencies are set in **Data › Funds**.
+
+- The **fund selector** in the top bar (*All funds*, EFH, LGV1, LGV2) filters **Pipeline** and **Portfolio**. With *All funds*, Portfolio shows one section per fund, each in its own currency; the amounts of different funds are never added together.
+- A **deal** belongs to a fund from the **Qualified** stage on. Choose the fund in the new-deal form, or in the **Round** card (*Edit*). If you move a deal to Qualified without a fund, the app asks you to choose one; if there is only one fund it is assigned automatically. New deals (stage *Sourced*) have no fund and are visible whichever fund is selected.
+- The **company page** shows the position of each fund in **Our position**: stake, invested, value, multiple and IRR, in the currency of the fund.
+- **Exchange rates** are loaded every day by the app from the European Central Bank (CHF per unit of EUR and USD) and are used for any conversion, on the date of the transaction or the last working day before it. A rate typed in **Data › Exchange rates** is never replaced. For a bank transfer whose real rate you know, enter it on the investment: it takes precedence.
+- Funds whose companies are not tracked share by share (for example LGV1) hold **positions at the reported value**: investment type *Position at the value reported by the fund*, with the cost, the value reported by the fund and the date of that value. The value is updated by editing that investment (or importing the new report).
+
 ## A company that appears twice
 
 Sometimes an email or a search creates a second company for one that already exists, for example under a slightly different name. To merge them:

@@ -198,6 +198,24 @@ git pull
 docker compose up -d --build          # le migrazioni del database partono da sole
 ```
 
+## 7b. Fondi, cambi e importazione di LGV1 (una volta)
+
+Dopo l'aggiornamento del 25 novembre 2026, sul server, in `~/lgv-manager`:
+
+```sh
+# 1. crea/aggiorna i fondi EFH (USD), LGV1 (CHF), LGV2 (EUR) e assegna a EFH gli investimenti e i deal già presenti
+sudo docker compose exec app python manage.py setup_funds --assign-existing EFH
+# 2. carica i cambi della Banca centrale europea, con lo storico dal 1999 (poi li aggiorna da solo ogni giorno)
+sudo docker compose exec app python manage.py update_fx_rates --full
+# 3. importa LGV1: copia il file nel contenitore, prova (non scrive), poi importa
+sudo docker compose cp ~/portfolio.xlsx app:/tmp/portfolio.xlsx
+sudo docker compose exec app python manage.py import_lgv1 /tmp/portfolio.xlsx
+sudo docker compose exec app python manage.py import_lgv1 /tmp/portfolio.xlsx --apply
+```
+
+L'importazione si può ripetere: aggiorna le stesse righe invece di aggiungerne. Gli avvisi (date non trovate, totali
+che non tornano) vanno controllati prima di `--apply`.
+
 ## 8. Backup
 
 Ogni notte (alle 02:30, ora svizzera) il container `backup` salva database, documenti e `.env`,
