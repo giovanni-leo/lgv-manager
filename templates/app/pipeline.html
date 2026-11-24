@@ -2,7 +2,7 @@
 {% block title %}{% translate "Pipeline" %}{% endblock %}
 {% block content %}
 <div class="page-head">
-  <h1>{% translate "Pipeline" %}</h1>
+  <h1>{% translate "Pipeline" %}{% if active_fund %} <span class="muted">· {{ active_fund.label }}</span>{% endif %}</h1>
   {% if perms.core.add_deal %}<a class="btn primary" href="{% url 'deal_new' %}">{% translate "New deal" %}</a>{% endif %}
 </div>
 <div class="kanban">

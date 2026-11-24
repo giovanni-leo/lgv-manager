@@ -7,12 +7,24 @@ from django.views.decorators.http import require_POST
 from .models import InvestingEntity
 
 SESSION_KEY = "fund_id"
+ALL = "all"
+
+
+def ordered_funds():
+    return InvestingEntity.objects.order_by("code", "name")
 
 
 def active_fund(request):
-    """The selected fund, or None for all funds."""
-    pk = request.session.get(SESSION_KEY)
-    return InvestingEntity.objects.filter(pk=pk).first() if pk else None
+    """The selected fund. None means "all funds", chosen explicitly: until someone chooses, the first fund is
+    shown, so that the figures of two funds are not mixed on one page by default."""
+    chosen = request.session.get(SESSION_KEY)
+    if chosen == ALL:
+        return None
+    if isinstance(chosen, int):
+        fund = InvestingEntity.objects.filter(pk=chosen).first()
+        if fund:
+            return fund
+    return ordered_funds().first()
 
 
 @require_POST
@@ -21,8 +33,18 @@ def fund_select(request):
     if fund_id.isdigit() and InvestingEntity.objects.filter(pk=int(fund_id)).exists():
         request.session[SESSION_KEY] = int(fund_id)
     else:
-        request.session.pop(SESSION_KEY, None)
+        request.session[SESSION_KEY] = ALL
     target = request.POST.get("next") or "/"
     if not url_has_allowed_host_and_scheme(target, allowed_hosts={request.get_host()}, require_https=request.is_secure()):
         target = "/"
     return redirect(target)
+
+
+def fund_company_ids(fund):
+    """Companies the fund has money in, or deals with."""
+    from django.db.models import Q
+
+    from .models import Company
+
+    return Company.objects.filter(Q(investments__entity=fund) | Q(realizations__entity=fund) | Q(deals__fund=fund)
+                                  ).values_list("pk", flat=True).distinct()

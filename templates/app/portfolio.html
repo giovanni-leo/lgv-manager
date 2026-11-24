@@ -2,7 +2,7 @@
 {% block title %}{% translate "Portfolio" %}{% endblock %}
 {% block content %}
 <div class="page-head">
-  <h1>{% translate "Portfolio" %}</h1>
+  <h1>{% translate "Portfolio" %}{% if active_fund %} <span class="muted">· {{ active_fund.label }}</span>{% endif %}</h1>
   <nav class="tabs">
     <a href="?show=active" {% if show == "active" %}aria-current="page"{% endif %}>{% translate "Active" %}</a>
     <a href="?show=all" {% if show != "active" %}aria-current="page"{% endif %}>{% translate "Including exits" %}</a>

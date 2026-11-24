@@ -114,18 +114,59 @@ class FundPagesTests(TestCase):
         Investment.objects.create(company=self.co, entity=self.efh, invest_date=date(2026, 6, 1),
                                   instrument="reported", amount=D("1000"), currency="USD", reported_value=D("1200"))
 
-    def test_selector_filters_the_portfolio_and_remembers_the_choice(self):
+    def test_the_first_fund_is_shown_by_default_and_the_choice_is_remembered(self):
         page = self.client.get("/portfolio/")
-        self.assertContains(page, '<option value="">All funds</option>', html=True)
-        self.assertContains(page, "EFH (USD)")
-        self.assertContains(page, "USD 1&#x27;200")                           # EFH section, in dollars
+        self.assertContains(page, '<button type="submit" name="fund" value="%d" class="pill on"' % self.efh.pk)
+        self.assertContains(page, "<h1>Portfolio <span")                        # the page says which fund it shows
+        self.assertContains(page, "USD 1&#x27;200")                             # EFH, in dollars
         self.assertEqual(self.client.post("/fund/select/", {"fund": self.lgv2.pk, "next": "/portfolio/"})["Location"],
                          "/portfolio/")
         page = self.client.get("/portfolio/")
-        self.assertContains(page, "LGV2")
+        self.assertContains(page, '<button type="submit" name="fund" value="%d" class="pill on"' % self.lgv2.pk)
         self.assertNotContains(page, "Field Medical")                          # LGV2 has no investments yet
-        self.client.post("/fund/select/", {"fund": ""})
-        self.assertContains(self.client.get("/portfolio/"), "Field Medical")
+        self.client.post("/fund/select/", {"fund": "all"})
+        page = self.client.get("/portfolio/")
+        self.assertContains(page, "Field Medical")                              # all funds: one section per fund
+        self.assertContains(page, 'name="fund" value="all" class="pill pill-all on"')
+
+    def test_home_shows_only_the_selected_fund(self):
+        from datetime import timedelta
+
+        from django.utils import timezone
+
+        soon = timezone.localdate() + timedelta(days=5)
+        beta = Company.objects.create(name="BetaCo", status="portfolio")
+        Investment.objects.create(company=beta, entity=self.lgv2, invest_date=date(2026, 6, 1), instrument="reported",
+                                  amount=D("10"), currency="EUR", reported_value=D("10"))
+        from core.models import Interaction
+
+        Interaction.objects.create(company=self.co, kind="general_assembly", occurred_on=soon, summary="AGM Field")
+        Interaction.objects.create(company=beta, kind="board", occurred_on=soon, summary="Board BetaCo")
+        Deal.objects.create(company=Company.objects.create(name="AlphaDeal"), stage="due_diligence", fund=self.efh,
+                            deadline=soon, round_name="A")
+        Deal.objects.create(company=Company.objects.create(name="BetaDeal"), stage="due_diligence", fund=self.lgv2,
+                            deadline=soon, round_name="A")
+        Deal.objects.create(company=Company.objects.create(name="NewDeal"), stage="sourced", deadline=soon)
+        home = self.client.get("/")                                              # EFH by default
+        self.assertContains(home, "AGM Field")
+        self.assertContains(home, "AlphaDeal")
+        self.assertContains(home, "NewDeal")                                     # no fund yet: always visible
+        self.assertNotContains(home, "BetaDeal")
+        self.assertNotContains(home, "Board BetaCo")
+        self.client.post("/fund/select/", {"fund": self.lgv2.pk})
+        home = self.client.get("/")
+        self.assertContains(home, "BetaDeal")
+        self.assertContains(home, "Board BetaCo")
+        self.assertNotContains(home, "AlphaDeal")
+        self.assertNotContains(home, "AGM Field")
+        self.client.post("/fund/select/", {"fund": "all"})
+        home = self.client.get("/")
+        for text in ("AlphaDeal", "BetaDeal", "AGM Field", "Board BetaCo"):
+            self.assertContains(home, text)
+
+    def test_with_a_single_fund_there_is_no_selector(self):
+        self.lgv2.delete()
+        self.assertNotContains(self.client.get("/portfolio/"), 'class="fund-bar"')
 
     def test_selector_ignores_unsafe_redirects_and_unknown_funds(self):
         response = self.client.post("/fund/select/", {"fund": "9999", "next": "https://evil.example/"})
@@ -135,6 +176,7 @@ class FundPagesTests(TestCase):
         Deal.objects.create(company=Company.objects.create(name="Alpha"), stage="due_diligence", fund=self.efh)
         Deal.objects.create(company=Company.objects.create(name="Beta"), stage="due_diligence", fund=self.lgv2)
         Deal.objects.create(company=Company.objects.create(name="Gamma"), stage="sourced")           # no fund yet
+        self.client.post("/fund/select/", {"fund": "all"})
         page = self.client.get("/pipeline/")
         self.assertContains(page, "Alpha")
         self.assertContains(page, "Beta")

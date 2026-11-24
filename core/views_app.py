@@ -19,7 +19,7 @@ from .models import (FUNNEL_STAGES, CoInvestor, Company, Contact, Deal, DealStag
                      InvestingEntity,
                      Interaction, RoundParticipant)
 from .models.pipeline import FUND_REQUIRED_STAGES
-from .funds import active_fund
+from .funds import active_fund, fund_company_ids
 from .sections import SECTIONS, formfield
 from .services.exit import exit_analysis
 from .services.people import sort_people
@@ -373,9 +373,14 @@ def home(request):
     soon = today + timedelta(days=14)
     can_deals = request.user.has_perm("core.view_deal")
     can_companies = request.user.has_perm("core.view_company")
+    fund = active_fund(request)
+    company_ids = set(fund_company_ids(fund)) if fund else None
     deadlines = []
     if can_deals:
-        for d in Deal.objects.filter(stage__in=OPEN_STAGES).select_related("company"):
+        open_deals = Deal.objects.filter(stage__in=OPEN_STAGES).select_related("company", "fund")
+        if fund:                                  # the fund's deals and the new ones that have no fund yet
+            open_deals = open_deals.filter(Q(fund=fund) | Q(fund__isnull=True))
+        for d in open_deals:
             for label, when in (("Round deadline", d.deadline), ("Next step", d.next_step_due)):
                 if when and when <= soon:
                     deadlines.append({"deal": d, "label": label, "date": when,
@@ -383,21 +388,27 @@ def home(request):
         deadlines.sort(key=lambda x: x["date"])
     alerts, assemblies = [], []
     if can_companies:
-        for c in Company.objects.filter(status="portfolio"):
+        portfolio_companies = Company.objects.filter(status="portfolio")
+        if fund:
+            portfolio_companies = portfolio_companies.filter(pk__in=company_ids)
+        for c in portfolio_companies:
             r = runway(c)
             if r and r.level in ("warning", "critical"):
                 alerts.append({"company": c, "runway": r})
-        assemblies = Interaction.objects.filter(kind__in=["general_assembly", "board", "meeting"],
-                                                occurred_on__gte=today).select_related(
-            "company").order_by("occurred_on")[:10]
+        meetings = Interaction.objects.filter(kind__in=["general_assembly", "board", "meeting"],
+                                              occurred_on__gte=today).select_related("company")
+        assemblies = (meetings.filter(company_id__in=company_ids) if fund else meetings).order_by("occurred_on")[:10]
+    rounds = FundingRound.objects.filter(announced_on__isnull=False).exclude(company__status__in=["archived"])
+    recent = Interaction.objects.filter(occurred_on__lte=today)
+    warnings = _named(consistency_warnings()) if can_companies else []
+    if fund:
+        rounds, recent = rounds.filter(company_id__in=company_ids), recent.filter(company_id__in=company_ids)
+        warnings = [w for w in warnings if w["company_id"] in company_ids]
     return render(request, "core/home.html", {
-        "deadlines": deadlines, "alerts": alerts, "assemblies": assemblies,
-        "warnings": _named(consistency_warnings()) if can_companies else [],
-        "recent_rounds": FundingRound.objects.filter(announced_on__isnull=False)
-        .exclude(company__status__in=["archived"]).select_related("company")
-        .prefetch_related("investors__co_investor").order_by("-announced_on", "-id")[:8]
+        "deadlines": deadlines, "alerts": alerts, "assemblies": assemblies, "warnings": warnings,
+        "recent_rounds": rounds.select_related("company").prefetch_related("investors__co_investor")
+        .order_by("-announced_on", "-id")[:8] if can_companies else [],
+        "recent": recent.select_related("company", "deal").order_by("-occurred_on", "-id")[:8]
         if can_companies else [],
-        "recent": Interaction.objects.filter(occurred_on__lte=today).select_related("company", "deal")
-        .order_by("-occurred_on", "-id")[:8]
-        if can_companies else [],
+        "fund": fund,
     })

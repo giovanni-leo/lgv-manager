@@ -1,6 +1,6 @@
 {% extends "base.html" %}{% load i18n vc %}
 {% block content %}
-<div class="page-head"><h1>{% translate "Home" %}</h1>
+<div class="page-head"><h1>{% translate "Home" %}{% if fund %} <span class="muted">· {{ fund.label }}</span>{% endif %}</h1>
   {% if perms.core.add_deal %}<a class="btn primary" href="{% url 'deal_new' %}">{% translate "New deal" %}</a>{% endif %}</div>
 <div class="grid">
   <section class="card">

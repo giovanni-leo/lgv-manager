@@ -14,6 +14,7 @@
 </head>
 <body hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
   {% include "_topbar.html" %}
+  {% if user.is_authenticated and user.is_verified %}{% include "_fund_bar.html" %}{% endif %}
   {% block content_wrapper %}<main>
     {% if messages %}<ul class="messages">{% for m in messages %}<li class="{{ m.tags }}">{{ m }}</li>{% endfor %}</ul>{% endif %}
     {% block content %}{% endblock %}</main>{% endblock %}

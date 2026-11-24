@@ -1,11 +1,6 @@
 {% load i18n %}<header class="topbar">
   <a class="brand" href="{% url 'home' %}">{{ SITE_NAME }}</a>
-  {% if funds %}<form class="fund-select" method="post" action="{% url 'fund_select' %}">{% csrf_token %}
-    <input type="hidden" name="next" value="{{ request.get_full_path }}">
-    <select name="fund" onchange="this.form.submit()" aria-label="{% translate 'Fund' %}">
-      <option value="">{% translate "All funds" %}</option>
-      {% for f in funds %}<option value="{{ f.pk }}" {% if active_fund and active_fund.pk == f.pk %}selected{% endif %}>{{ f.label }} ({{ f.base_currency }})</option>{% endfor %}
-    </select></form>{% endif %}
+
   {% if user.is_authenticated and user.is_verified %}
   <nav>
     {% url 'home' as home_url %}{% url 'pipeline' as pipeline_url %}{% url 'portfolio' as portfolio_url %}{% url 'manual' as manual_url %}

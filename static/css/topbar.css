@@ -12,3 +12,11 @@
 .app-version { text-align: center; color: #8a92a0; font: 12px/1.4 system-ui, sans-serif; padding: 1.5rem 1rem 1rem; }
 .topbar .brand, .topbar .brand:link, .topbar .brand:visited { font-weight: 700; color: #0b6e4f; }
 .topbar .fund-select select { font: inherit; padding: .15rem .4rem; border: 1px solid #c7ccd4; border-radius: 6px; background: #fff; color: #1d2433; }
+.fund-bar { background: #f5f6f8; border-bottom: 1px solid #e3e6eb; padding: .35rem 1rem; font: 14px/1.4 system-ui, -apple-system, "Segoe UI", sans-serif; position: sticky; top: 3.4rem; z-index: 40; }
+.fund-bar form { display: flex; flex-wrap: wrap; gap: .4rem; align-items: center; margin: 0; }
+.fund-bar-label { color: #5b6475; margin-right: .2rem; }
+.fund-bar .pill { font: inherit; padding: .25rem .8rem; border-radius: 999px; border: 1px solid #c7ccd4; background: #fff; color: #1d2433; cursor: pointer; }
+.fund-bar .pill small { color: #5b6475; font-size: .75rem; }
+.fund-bar .pill.on { background: #0b6e4f; border-color: #0b6e4f; color: #fff; font-weight: 600; }
+.fund-bar .pill.on small { color: #d6efe5; }
+.fund-bar .pill-all { margin-left: auto; border-style: dashed; }

@@ -1,0 +1,9 @@
+{% load i18n %}{% if funds|length > 1 %}
+<div class="fund-bar">
+  <form method="post" action="{% url 'fund_select' %}">{% csrf_token %}
+    <input type="hidden" name="next" value="{{ request.get_full_path }}">
+    <span class="fund-bar-label">{% translate "Fund" %}</span>
+    {% for f in funds %}<button type="submit" name="fund" value="{{ f.pk }}" class="pill{% if active_fund and active_fund.pk == f.pk %} on{% endif %}" title="{{ f.name }}">{{ f.label }} <small>{{ f.base_currency }}</small></button>{% endfor %}
+    <button type="submit" name="fund" value="all" class="pill pill-all{% if not active_fund %} on{% endif %}" title="{% translate 'Figures of each fund, one after the other' %}">{% translate "All funds" %}</button>
+  </form>
+</div>{% endif %}
