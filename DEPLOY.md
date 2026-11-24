@@ -82,7 +82,7 @@ Valori da impostare in `.env`:
 
 ```ini
 DOMAIN=vc.tuodominio.ch
-SITE_NAME=Lake Growth Ventures
+APP_NAME=VC Manager
 DJANGO_ALLOWED_HOSTS=vc.tuodominio.ch
 DJANGO_CSRF_TRUSTED_ORIGINS=https://vc.tuodominio.ch
 DJANGO_SECRET_KEY=...        # genera con: openssl rand -base64 48
@@ -212,6 +212,8 @@ sudo docker compose cp ~/portfolio.xlsx app:/tmp/portfolio.xlsx
 sudo docker compose exec app python manage.py import_lgv1 /tmp/portfolio.xlsx
 sudo docker compose exec app python manage.py import_lgv1 /tmp/portfolio.xlsx --apply
 ```
+
+Se due voci indicano lo stesso fondo (per esempio EFH ed EFH-SPV), `merge_funds EFH EFH-SPV` mostra cosa sposterebbe e, con `--apply`, sposta investimenti, realizzazioni e deal sul secondo e cancella il primo.
 
 L'importazione si può ripetere: aggiorna le stesse righe invece di aggiungerne. Gli avvisi (date non trovate, totali
 che non tornano) vanno controllati prima di `--apply`.

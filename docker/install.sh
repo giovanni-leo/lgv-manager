@@ -21,7 +21,7 @@ rand_hex() {  # $1 bytes of randomness, as hex
 }
 
 DOMAIN="${1:?usage: sh docker/install.sh DOMAIN [SITE_NAME]}"
-SITE_NAME="${2:-Lake Growth Ventures}"
+SITE_NAME="${2:-VC Manager}"
 
 cd "$(dirname "$0")/.."
 

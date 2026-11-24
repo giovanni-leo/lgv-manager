@@ -12,7 +12,8 @@ from core.models import Deal, InvestingEntity, Investment, Realization
 
 FUNDS = [
     # (code, name, currency, names it may already have in the database)
-    ("EFH", "Efficient Frontier Holding SA", "USD", ["Efficient Frontier Holding SA", "Efficient Frontier Holding"]),
+    ("EFH", "Efficient Frontier Holding SA", "USD", ["Efficient Frontier Holding SA", "Efficient Frontier Holding",
+                                                     "EFH-SPV", "EFH SPV"]),
     ("LGV1", "Lake Geneva Ventures 1", "CHF", ["Lake Geneva Ventures 1"]),
     ("LGV2", "Lake Growth Ventures 2", "EUR", ["Lake Growth Ventures 2", "Lake Growth Ventures"]),
 ]
@@ -30,14 +31,16 @@ class Command(BaseCommand):
         by_code = {}
         for code, name, currency, aliases in FUNDS:
             fund = InvestingEntity.objects.filter(code=code).first() \
+                or InvestingEntity.objects.filter(code__in=aliases).first() \
                 or InvestingEntity.objects.filter(name__in=aliases).first()
             created = fund is None
-            fund = fund or InvestingEntity(name=name)
-            fund.code, fund.kind, fund.base_currency = code, InvestingEntity.Kind.FUND, currency
-            if created:
-                fund.name = name
+            fund = fund or InvestingEntity(name=name, code=code)
+            fund.kind, fund.base_currency = InvestingEntity.Kind.FUND, currency        # an existing short name is kept
+            if not fund.code:
+                fund.code = code
             fund.save()
             by_code[code] = fund
+            by_code.setdefault(fund.code, fund)
             self.stdout.write(f"{'Created' if created else 'Updated'}: {code} – {fund.name} ({currency})")
         if assign_existing:
             if assign_existing not in by_code:

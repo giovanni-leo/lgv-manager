@@ -269,3 +269,65 @@ class FundDocumentsTests(TestCase):
         self.assertEqual(self.titles(), ["Beta SPA", "New deck"])
         self.client.post("/fund/select/", {"fund": "all"})
         self.assertEqual(self.titles(), ["Beta SPA", "Field SPA", "New deck"])
+
+
+class MergeFundsTests(TestCase):
+    def setUp(self):
+        self.efh = fund("Efficient Frontier Holding SA", "EFH", "USD")
+        self.spv = fund("EFH SPV", "EFH-SPV", "USD")
+        co = Company.objects.create(name="Field Medical", status="portfolio")
+        self.inv = Investment.objects.create(company=co, entity=self.efh, invest_date=date(2026, 6, 1),
+                                             instrument="spv", amount=D(10), currency="USD")
+        self.real = Realization.objects.create(company=co, entity=self.efh, realized_on=date(2026, 7, 1),
+                                               kind=Realization.Kind.values[0], proceeds=D(5), currency="USD")
+        self.deal = Deal.objects.create(company=co, stage="invested", fund=self.efh)
+
+    def run_command(self, *args):
+        from io import StringIO
+
+        from django.core.management import call_command
+
+        out = StringIO()
+        call_command("merge_funds", *args, stdout=out)
+        return out.getvalue()
+
+    def test_dry_run_changes_nothing(self):
+        out = self.run_command("EFH", "EFH-SPV")
+        self.assertIn("1 investment(s), 1 realization(s), 1 deal(s)", out)
+        self.assertIn("Dry run", out)
+        self.inv.refresh_from_db()
+        self.assertEqual(self.inv.entity, self.efh)
+
+    def test_apply_moves_everything_and_removes_the_fund(self):
+        self.run_command("EFH", "EFH-SPV", "--apply")
+        self.inv.refresh_from_db(), self.real.refresh_from_db(), self.deal.refresh_from_db()
+        self.assertEqual((self.inv.entity, self.real.entity, self.deal.fund), (self.spv, self.spv, self.spv))
+        self.assertFalse(InvestingEntity.objects.filter(code="EFH").exists())
+
+    def test_different_currencies_are_flagged_and_unknown_or_same_funds_refused(self):
+        from django.core.management import CommandError
+
+        InvestingEntity.objects.filter(pk=self.spv.pk).update(base_currency="CHF")
+        self.assertIn("The currencies differ", self.run_command("EFH", "EFH-SPV"))
+        with self.assertRaises(CommandError):
+            self.run_command("EFH", "NOPE")
+        with self.assertRaises(CommandError):
+            self.run_command("EFH", "EFH")
+
+    def test_setup_funds_does_not_bring_efh_back_when_efh_spv_exists(self):
+        from io import StringIO
+
+        from django.core.management import call_command
+
+        self.run_command("EFH", "EFH-SPV", "--apply")
+        call_command("setup_funds", stdout=StringIO())
+        self.assertEqual(sorted(InvestingEntity.objects.values_list("code", flat=True)), ["EFH-SPV", "LGV1", "LGV2"])
+        self.assertEqual(InvestingEntity.objects.get(code="EFH-SPV").base_currency, "USD")
+
+
+class AppNameTests(TestCase):
+    def test_the_top_bar_names_the_app_not_a_fund(self):
+        verified_client(self.client, User.objects.create_superuser("g", "g@example.com", "a-long-test-password"))
+        page = self.client.get("/")
+        self.assertContains(page, '<a class="brand" href="/">VC Manager</a>', html=True)
+        self.assertContains(page, "<title>VC Manager</title>")

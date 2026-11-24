@@ -119,7 +119,9 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 # Name shown in the interface and in authenticator apps (one installation per fund).
-SITE_NAME = env("SITE_NAME", "VC Manager")
+# The name shown in the top bar, page titles and authenticator apps: the app, not a fund. (APP_NAME in .env; the
+# old SITE_NAME line of an existing .env is ignored.)
+SITE_NAME = env("APP_NAME", "VC Manager")
 # "Manual" in the menu shows docs/USER_GUIDE.md; set a URL to open an external copy instead.
 USER_MANUAL_URL = env("USER_MANUAL_URL", "")
 # Merging two companies is switched off: the code is kept; set ENABLE_COMPANY_MERGE=1 to turn it back on.
