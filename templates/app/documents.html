@@ -2,7 +2,7 @@
 {% block title %}{% translate "Documents" %} · {{ SITE_NAME }}{% endblock %}
 {% block content %}
 <div class="page-head">
-  <h1>{% translate "Documents" %}</h1>
+  <h1>{% translate "Documents" %}{% if active_fund %} <span class="muted">· {{ active_fund.label }}</span>{% endif %}</h1>
   {% if perms.core.add_document %}<div class="head-actions"><a class="btn" href="{% admin_add 'document' %}">{% translate "Upload" %}</a>
     <a class="btn" href="{% admin_add 'documentfolder' %}">{% translate "New folder" %}</a></div>{% endif %}
 </div>

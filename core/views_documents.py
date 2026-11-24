@@ -8,6 +8,7 @@ from django.shortcuts import render
 from django.utils.html import escape
 from django.utils.safestring import mark_safe
 
+from .funds import active_fund, visible_company_ids
 from .models import Company, Document, DocumentFolder
 
 PAGE_SIZE = 40
@@ -23,7 +24,13 @@ def _snippet(text):
 def documents(request):
     g = request.GET
     q = (g.get("q") or "").strip()[:200]
-    qs = Document.objects.select_related("company", "folder", "deal")
+    base = Document.objects.all()
+    fund = active_fund(request)
+    visible = None
+    if fund:                          # documents of the selected fund's companies (and of companies without a fund yet)
+        visible = visible_company_ids(fund)
+        base = base.filter(Q(company_id__in=visible) | Q(company__isnull=True, deal__company_id__in=visible))
+    qs = base.select_related("company", "folder", "deal")
     if g.get("company", "").isdigit():
         qs = qs.filter(company_id=int(g["company"]))
     if g.get("category") in {c.value for c in Document.Category}:
@@ -46,16 +53,18 @@ def documents(request):
     page = Paginator(qs, PAGE_SIZE).get_page(g.get("page"))
     for doc in page:
         doc.snippet = _snippet(getattr(doc, "headline", "")) if q and doc.extracted_text else ""
-    years = sorted({d.year for d in Document.objects.exclude(document_date=None).dates("document_date", "year")},
-                   reverse=True)
+    years = sorted({d.year for d in base.exclude(document_date=None).dates("document_date", "year")}, reverse=True)
     folders = DocumentFolder.objects.select_related("company")
+    companies = Company.objects.filter(documents__isnull=False).distinct().order_by("name")
+    if visible is not None:
+        folders, companies = folders.filter(company_id__in=visible), companies.filter(pk__in=visible)
     if g.get("company", "").isdigit():
         folders = folders.filter(company_id=int(g["company"]))
     keep = g.copy()
     keep.pop("page", None)
     return render(request, "app/documents.html", {
         "page": page, "q": q, "total": page.paginator.count,
-        "companies": Company.objects.filter(documents__isnull=False).distinct().order_by("name"),
+        "companies": companies,
         "categories": Document.Category.choices, "years": years, "folders": folders,
         "selected": {k: g.get(k, "") for k in ("company", "category", "folder", "year")},
         "querystring": keep.urlencode(),

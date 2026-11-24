@@ -5,7 +5,7 @@ from decimal import Decimal
 from unittest import mock
 
 from django.contrib.auth.models import User
-from django.test import TestCase
+from django.test import TestCase, override_settings
 
 from core.ai import claude, jobs, mail
 from core.models import (AiJob, CoInvestor, Company, CompanyMetric, Contact, Deal, Document, DocumentFolder,
@@ -144,6 +144,7 @@ class AliasMatchingTests(TestCase):
         self.assertEqual(Deal.objects.get().company, keep)
 
 
+@override_settings(ENABLE_COMPANY_MERGE=True)
 class MergePageTests(TestCase):
     def setUp(self):
         self.keep = Company.objects.create(name="Advanced NanoTherapies, Inc")
@@ -199,3 +200,11 @@ class PipelineCardLinkTests(TestCase):
         self.assertContains(page, f'href="/companies/{co.pk}/"')
         self.assertNotContains(page, f'href="/deals/{invested.pk}/"')
         self.assertContains(page, f'href="/deals/{open_deal.pk}/"')
+
+
+class MergeIsOffByDefaultTests(TestCase):
+    def test_no_button_and_the_page_is_not_found(self):
+        keep = Company.objects.create(name="Advanced NanoTherapies, Inc")
+        verified_client(self.client, User.objects.create_superuser("g", "g@example.com", "a-long-test-password"))
+        self.assertNotContains(self.client.get(f"/companies/{keep.pk}/"), "Merge a duplicate")
+        self.assertEqual(self.client.get(f"/companies/{keep.pk}/merge/").status_code, 404)

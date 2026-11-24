@@ -122,6 +122,8 @@ AUTH_PASSWORD_VALIDATORS = [
 SITE_NAME = env("SITE_NAME", "VC Manager")
 # "Manual" in the menu shows docs/USER_GUIDE.md; set a URL to open an external copy instead.
 USER_MANUAL_URL = env("USER_MANUAL_URL", "")
+# Merging two companies is switched off: the code is kept; set ENABLE_COMPANY_MERGE=1 to turn it back on.
+ENABLE_COMPANY_MERGE = env_bool("ENABLE_COMPANY_MERGE", False)
 
 # --- Authentication / 2FA ----------------------------------------------------
 LOGIN_URL = "two_factor:login"

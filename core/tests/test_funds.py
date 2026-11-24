@@ -237,3 +237,35 @@ class SetupFundsTests(TestCase):
         self.assertEqual((inv.entity, deal.fund, sourced.fund), (old, old, None))
         call_command("setup_funds", stdout=__import__("io").StringIO())                      # again: nothing changes
         self.assertEqual(InvestingEntity.objects.filter(code__isnull=False).count(), 3)
+
+
+class FundDocumentsTests(TestCase):
+    def setUp(self):
+        from .test_documents import make_document, tiny_pdf
+
+        self.efh = fund("Efficient Frontier Holding SA", "EFH", "USD")
+        self.lgv2 = fund("Lake Growth Ventures 2", "LGV2", "EUR")
+        verified_client(self.client, User.objects.create_superuser("g", "g@example.com", "a-long-test-password"))
+        field = Company.objects.create(name="Field Medical", status="portfolio")
+        Investment.objects.create(company=field, entity=self.efh, invest_date=date(2026, 6, 1), instrument="spv",
+                                  amount=D(10), currency="USD")
+        beta = Company.objects.create(name="BetaCo", status="portfolio")
+        Investment.objects.create(company=beta, entity=self.lgv2, invest_date=date(2026, 6, 1), instrument="spv",
+                                  amount=D(10), currency="EUR")
+        new = Company.objects.create(name="NewCo")                                 # no fund yet
+        make_document(field, "a.pdf", tiny_pdf("a"), title="Field SPA")
+        make_document(beta, "b.pdf", tiny_pdf("b"), title="Beta SPA")
+        make_document(new, "c.pdf", tiny_pdf("c"), title="New deck")
+
+    def titles(self):
+        return sorted(d.title for d in self.client.get("/documents/").context["page"])
+
+    def test_documents_follow_the_selected_fund(self):
+        self.assertEqual(self.titles(), ["Field SPA", "New deck"])                 # EFH by default + companies without fund
+        page = self.client.get("/documents/")
+        self.assertContains(page, "<h1>Documents <span")
+        self.assertNotContains(page, ">BetaCo</option>")                          # not in the company filter either
+        self.client.post("/fund/select/", {"fund": self.lgv2.pk})
+        self.assertEqual(self.titles(), ["Beta SPA", "New deck"])
+        self.client.post("/fund/select/", {"fund": "all"})
+        self.assertEqual(self.titles(), ["Beta SPA", "Field SPA", "New deck"])

@@ -48,3 +48,16 @@ def fund_company_ids(fund):
 
     return Company.objects.filter(Q(investments__entity=fund) | Q(realizations__entity=fund) | Q(deals__fund=fund)
                                   ).values_list("pk", flat=True).distinct()
+
+
+def visible_company_ids(fund):
+    """Companies shown when ``fund`` is selected: those of the fund, and those not tied to any fund yet
+    (new companies that are still being looked at)."""
+    from django.db.models import Q
+
+    from .models import Company
+
+    tied = set(Company.objects.filter(Q(investments__isnull=False) | Q(realizations__isnull=False)
+                                      | Q(deals__fund__isnull=False)).values_list("pk", flat=True))
+    everyone = set(Company.objects.values_list("pk", flat=True))
+    return set(fund_company_ids(fund)) | (everyone - tied)

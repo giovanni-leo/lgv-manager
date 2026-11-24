@@ -185,18 +185,6 @@ The app manages several **funds** (today EFH in US dollars, LGV1 in Swiss francs
 - **Exchange rates** are loaded every day by the app from the European Central Bank (CHF per unit of EUR and USD) and are used for any conversion, on the date of the transaction or the last working day before it. A rate typed in **Data › Exchange rates** is never replaced. For a bank transfer whose real rate you know, enter it on the investment: it takes precedence.
 - Funds whose companies are not tracked share by share (for example LGV1) hold **positions at the reported value**: investment type *Position at the value reported by the fund*, with the cost, the value reported by the fund and the date of that value. The value is updated by editing that investment (or importing the new report).
 
-## A company that appears twice
-
-Sometimes an email or a search creates a second company for one that already exists, for example under a slightly different name. To merge them:
-
-1. Open the company you want to **keep**.
-2. Click **Merge a duplicate…** (top right) and choose the duplicate in the list.
-3. Click **Show what moves**: you see what each company holds. Then click **Merge … into …**.
-
-Everything of the duplicate moves to the company you keep: deals, contacts, documents and folders, events, funding rounds, investments, cap table, suggestions. Identical documents are kept once, and a funding round found twice becomes one. Details that were empty are filled in, and the duplicate's name is saved in the company's *Other names* (Data › Companies), so the next email using that name goes to the right company. It cannot be undone.
-
-If **both** companies already have a cap table, the merge is refused, because the shares would be counted twice: delete the cap table of the duplicate first.
-
 ### Pipeline cards and companies
 
 The **Pipeline** shows one card per **deal** (a round the fund looks at), while **Portfolio** lists **companies** we have invested in, once each. A company can therefore have several deals over time. A card in the *Invested* column opens the **company** page, where the position, cap table and documents are; the other cards open the deal.
@@ -204,6 +192,8 @@ The **Pipeline** shows one card per **deal** (a round the fund looks at), while 
 ## Documents
 
 The **Documents** page finds any document of any company. Type words in the search box: Claude's PDFs and Word files are searched **inside**, the matching words are highlighted, and scanned images can only be found by title or file name. Filter by company, category (investor report, board material, charter…), folder and year.
+
+The Documents page follows the **fund bar**: it shows the documents of the companies of the selected fund, plus those of new companies that have no fund yet. Choose *All funds* to see everything.
 
 Folders keep documents that belong together, such as all the papers of a financing round. Create one in **Documents › New folder**, and choose it in the document's **Folder** field. On the company page the folders are listed in the **Documents** card.
 

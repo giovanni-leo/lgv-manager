@@ -1,8 +1,12 @@
-"""Merge a duplicate company into the company that is kept."""
+"""Merge a duplicate company into the company that is kept.
 
+Switched off by default (settings.ENABLE_COMPANY_MERGE): the page answers 404 and no button is shown."""
+
+from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import permission_required
 from django.core.exceptions import PermissionDenied
+from django.http import Http404
 from django.shortcuts import get_object_or_404, redirect, render
 
 from .models import Company
@@ -12,6 +16,8 @@ from .services.merge import MergeError, check, counts, merge_companies
 @permission_required("core.change_company", raise_exception=True)
 def company_merge(request, pk):
     """Page of the company to KEEP: choose the duplicate, see what moves, confirm."""
+    if not settings.ENABLE_COMPANY_MERGE:
+        raise Http404("Merging companies is switched off.")
     target = get_object_or_404(Company, pk=pk)
     if not request.user.has_perm("core.delete_company"):
         raise PermissionDenied
