@@ -36,7 +36,7 @@ class RoundForm(forms.Form):
     our_shares = forms.IntegerField(label="Our shares", required=False, min_value=1,
                                     widget=_number(id="our_shares", step="1"))
     our_amount = forms.DecimalField(label="…or amount we invested", widget=_number(id="our_amount"), **MONEY)
-    entity = forms.ModelChoiceField(label="Investing entity", queryset=InvestingEntity.objects.all(),
+    entity = forms.ModelChoiceField(label="Fund", queryset=InvestingEntity.objects.all(),
                                     required=False)
     pool_size = forms.IntegerField(label="Option pool after the round (granted + ungranted)", required=False,
                                    min_value=0, widget=_number(step="1"))
@@ -81,6 +81,8 @@ def record_round_view(request, company_pk):
                "entity": entities[0] if len(entities) == 1 else None,
                "ex_name_1": "Common", "ex_common_1": True}
     if deal:
+        if deal.fund_id:
+            initial["entity"] = deal.fund
         initial.update({"round_name": deal.round_name or "", "currency": deal.currency,
                         "pre_money": deal.pre_money, "our_amount": deal.proposed_ticket,
                         "round_date": deal.closed_on or timezone.localdate()})

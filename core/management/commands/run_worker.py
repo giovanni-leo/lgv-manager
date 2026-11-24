@@ -14,8 +14,10 @@ from django.db import close_old_connections, connection
 from django.db.migrations.executor import MigrationExecutor
 
 from core.ai import jobs, mail
+from core.services import ecb
 
 log = logging.getLogger(__name__)
+FX_EVERY_SECONDS = 6 * 3600
 
 
 class Command(BaseCommand):
@@ -33,6 +35,7 @@ class Command(BaseCommand):
         if stale:
             log.warning("Marked %s interrupted job(s) as failed", stale)
         last_poll = 0.0
+        last_fx = -FX_EVERY_SECONDS            # exchange rates: once at start, then every few hours
         self.stdout.write("Worker started" + (" (mailbox: %s)" % settings.MAIL_IMAP_USER
                                               if mail.mailbox_configured() else " (no mailbox configured)"))
         while self.running:
@@ -46,6 +49,14 @@ class Command(BaseCommand):
                         log.info("Stored %s new email(s)", count)
                 except Exception:  # mailbox down: try again at the next poll
                     log.exception("Could not read the mailbox")
+            if not once and time.monotonic() - last_fx >= FX_EVERY_SECONDS:
+                last_fx = time.monotonic()
+                try:
+                    added = ecb.update()
+                    if added:
+                        log.info("Added %s exchange rate(s) from the ECB", added)
+                except Exception:  # offline or ECB down: try again later
+                    log.warning("Could not load the ECB exchange rates", exc_info=True)
             job = jobs.claim_next_job()
             if job:
                 log.info("Running %s", job)

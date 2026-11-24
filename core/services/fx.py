@@ -16,6 +16,23 @@ def rate_to_chf(currency, on_date):
     return rate
 
 
+def convert(amount, from_currency, to_currency, on_date, override_chf=None):
+    """Amount in another currency, through CHF (the rates are CHF per unit). None when a rate is missing.
+
+    ``override_chf`` is the CHF rate recorded on the transaction itself: it replaces the table for the
+    ``from_currency`` -> CHF step.
+    """
+    if amount is None:
+        return None
+    if from_currency == to_currency:
+        return Decimal(amount)
+    in_chf = to_chf(amount, from_currency, on_date, override_chf)
+    if in_chf is None or to_currency == settings.BASE_CURRENCY:
+        return in_chf
+    rate = rate_to_chf(to_currency, on_date)
+    return None if not rate else in_chf / Decimal(rate)
+
+
 def to_chf(amount, currency, on_date, override=None):
     """Amount in CHF. ``override`` is a rate recorded on the transaction itself."""
     if amount is None:

@@ -191,6 +191,7 @@ class Investment(models.Model):
         SAFE = "safe", _("SAFE")
         WARRANT = "warrant", _("Warrant")
         SPV = "spv", _("Interest in an SPV / fund")
+        REPORTED = "reported", _("Position at the value reported by the fund")
 
     company = models.ForeignKey(Company, on_delete=models.CASCADE, related_name="investments",
                                 verbose_name=_("company"))
@@ -214,6 +215,10 @@ class Investment(models.Model):
                                        related_name="conversions", verbose_name=_("converted from"))
     source_document = models.ForeignKey("Document", on_delete=models.SET_NULL, null=True, blank=True,
                                         related_name="+", verbose_name=_("source document"))
+    reported_value = money_field(_("reported value"), help_text=_(
+        "For a position without shares: its value as reported by the fund or the backoffice, in the investment "
+        "currency."))
+    reported_value_date = models.DateField(_("reported value as of"), null=True, blank=True)
     notes = models.TextField(_("notes"), blank=True, null=True)
 
     class Meta:
@@ -223,7 +228,7 @@ class Investment(models.Model):
         verbose_name_plural = _("investments")
         constraints = [
             models.CheckConstraint(
-                condition=Q(instrument__in=["equity", "convertible_loan", "safe", "warrant", "spv"]),
+                condition=Q(instrument__in=["equity", "convertible_loan", "safe", "warrant", "spv", "reported"]),
                 name="investments_instrument_check",
             ),
             models.CheckConstraint(

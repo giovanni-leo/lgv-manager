@@ -2,6 +2,7 @@
   <header><h2>{% translate "Round" %}</h2>
     {% if perms.core.change_deal %}<button class="btn small" hx-get="{% url 'section' 'deal' deal.pk 'round' %}?edit=1" hx-target="#deal-{{ deal.pk }}-round" hx-swap="outerHTML">{% translate "Edit" %}</button>{% endif %}</header>
   <dl class="facts">
+    <div><dt>{% translate "Fund" %}</dt><dd>{{ deal.fund.label|default:"–" }}</dd></div>
     <div><dt>{% translate "Round size" %}</dt><dd>{{ deal.round_size|money:deal.currency }}</dd></div>
     <div><dt>{% translate "Pre-money" %}</dt><dd>{{ deal.pre_money|money:deal.currency }}</dd></div>
     <div><dt>{% translate "Post-money" %}</dt><dd>{{ ds.post_money|money:deal.currency }}</dd></div>

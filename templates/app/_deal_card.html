@@ -1,5 +1,5 @@
 {% load i18n vc %}<a class="deal-card" href="{% if d.stage == 'invested' %}{% url 'company_detail' d.company_id %}{% else %}{% url 'deal_detail' d.pk %}{% endif %}">
-  <strong>{{ d.company.name }}</strong>
+  <strong>{{ d.company.name }}{% if d.fund %} <span class="badge fund-badge">{{ d.fund.label }}</span>{% endif %}</strong>
   <span class="muted">{{ d.round_name|default:"" }}{% if d.round_size %} · {{ d.round_size|money:d.currency }}{% endif %}</span>
   {% if d.pre_money %}<span>{% translate "Pre" %} {{ d.pre_money|money:d.currency }}</span>{% endif %}
   {% if d.lead %}<span>{% translate "Lead" %}: {{ d.lead.name }}</span>{% endif %}

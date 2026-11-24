@@ -29,12 +29,19 @@ FUNNEL_STAGES = [
 ]
 STAGE_VALUES = [s.value for s in DealStage]
 
+# From Qualified on, a deal belongs to a fund.
+FUND_REQUIRED_STAGES = {DealStage.FIRST_MEETING, DealStage.ANALYSIS, DealStage.DUE_DILIGENCE, DealStage.TERM_SHEET,
+                        DealStage.INVESTED}
+
 
 class Deal(models.Model):
     company = models.ForeignKey(Company, on_delete=models.CASCADE, related_name="deals",
                                 verbose_name=_("company"))
     stage = models.TextField(_("stage"), choices=DealStage.choices,
                              default=DealStage.SOURCED, db_default=DealStage.SOURCED)
+    fund = models.ForeignKey("InvestingEntity", on_delete=models.SET_NULL, null=True, blank=True,
+                             related_name="deals", verbose_name=_("fund"),
+                             help_text=_("The fund that follows this deal. Needed from the Qualified stage on."))
     source_contact = models.ForeignKey(Contact, on_delete=models.SET_NULL, null=True, blank=True,
                                        related_name="sourced_deals", verbose_name=_("source contact"))
     source_note = models.TextField(_("source note"), blank=True, null=True)

@@ -226,3 +226,5 @@ ol.timeline time { color: var(--muted); font-size: .85rem; margin-right: .4rem; 
 .cap-snapshot { margin-top: .4rem; }
 .cap-snapshot summary { cursor: pointer; color: var(--accent); }
 .cap-snapshot p { margin: .3rem 0; }
+.fund-badge { background: #e6f2ee; color: #0b6e4f; font-size: .7rem; margin-left: .3rem; }
+.fund-title { margin: 1.2rem 0 .4rem; font-size: 1.15rem; }

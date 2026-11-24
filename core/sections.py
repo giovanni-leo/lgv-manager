@@ -44,8 +44,8 @@ class Section:
 
 
 SECTIONS = {
-    ("deal", "round"): Section(Deal, ("round_name", "round_size", "pre_money", "proposed_ticket", "currency",
-                                      "deadline"), "app/deal/_round.html", "change_deal"),
+    ("deal", "round"): Section(Deal, ("fund", "round_name", "round_size", "pre_money", "proposed_ticket",
+                                      "currency", "deadline"), "app/deal/_round.html", "change_deal"),
     ("deal", "next"): Section(Deal, ("next_step", "next_step_due"), "app/deal/_next.html", "change_deal"),
     ("deal", "details"): Section(Deal, ("source_contact", "source_note", "opened_on", "closed_on", "pass_reason",
                                         "notes"), "app/deal/_details.html", "change_deal"),

@@ -10,7 +10,7 @@ from django.utils.translation import gettext as _
 
 from core.models import CompanyMetric, Interaction, RoundParticipant, Valuation
 
-from .fx import to_chf
+from .fx import convert
 from .ownership import ownership_by_class, ownership_company
 
 RUNWAY_WARNING_MONTHS = Decimal(12)
@@ -93,6 +93,9 @@ class CompanySummary:
     as_of: date
     ownership: object = None
     classes: list = field(default_factory=list)
+    # Amounts below are in ``ccy``: CHF, or the currency of the fund when a summary is made for one fund.
+    ccy: str = "CHF"
+    fund: object = None
     invested_chf: Decimal | None = None
     realized_chf: Decimal = Decimal(0)
     valuation: Valuation | None = None
@@ -124,24 +127,31 @@ def _price_per_common_share(valuation):
     return valuation.price_per_share / ratio
 
 
-def company_summary(company, as_of=None):
+def company_summary(company, as_of=None, fund=None):
+    """Position of the fund(s) in a company. With ``fund``: only that fund's money and shares, in its currency."""
     as_of = as_of or timezone.localdate()
-    s = CompanySummary(company=company, as_of=as_of)
-    s.ownership = ownership_company(company.pk, as_of)
-    s.classes = ownership_by_class(company.pk, as_of)
+    ccy = fund.base_currency if fund else "CHF"
+    entity_id = fund.pk if fund else None
+    s = CompanySummary(company=company, as_of=as_of, ccy=ccy, fund=fund)
+    s.ownership = ownership_company(company.pk, as_of, entity_id)
+    s.classes = ownership_by_class(company.pk, as_of, entity_id)
+    investments = company.investments.filter(invest_date__lte=as_of)
+    realizations = company.realizations.filter(realized_on__lte=as_of)
+    if fund:
+        investments, realizations = investments.filter(entity=fund), realizations.filter(entity=fund)
 
-    # Money in and out, in CHF.
+    # Money in and out, in the currency of the summary.
     invested = Decimal(0)
-    for inv in company.investments.filter(invest_date__lte=as_of):
-        chf = to_chf(inv.amount, inv.currency, inv.invest_date, inv.fx_to_chf)
+    for inv in investments:
+        chf = convert(inv.amount, inv.currency, ccy, inv.invest_date, inv.fx_to_chf)
         if chf is None:
             s.missing_fx = True
             continue
         invested += chf
         if chf:
             s.flows.append((inv.invest_date, -chf))
-    for real in company.realizations.filter(realized_on__lte=as_of):
-        chf = to_chf(real.proceeds, real.currency, real.realized_on, real.fx_to_chf)
+    for real in realizations:
+        chf = convert(real.proceeds, real.currency, ccy, real.realized_on, real.fx_to_chf)
         if chf is None:
             s.missing_fx = True
             continue
@@ -153,7 +163,8 @@ def company_summary(company, as_of=None):
     s.valuation = (company.valuations.filter(valuation_date__lte=as_of)
                    .select_related("share_class").order_by("-valuation_date", "-id").first())
     v, own = s.valuation, s.ownership
-    if v is not None:
+    has_shares = not fund or investments.filter(shares__isnull=False).exists()
+    if v is not None and has_shares:
         if v.method == Valuation.Method.WRITE_OFF:
             s.company_value, s.stake_value = Decimal(0), Decimal(0)
         else:
@@ -166,9 +177,18 @@ def company_summary(company, as_of=None):
                 if own is not None and own.pct_fully_diluted is not None:
                     s.stake_value = v.post_money * own.pct_fully_diluted / 100
         if s.stake_value is not None:
-            s.stake_value_chf = to_chf(s.stake_value, v.currency, as_of)
+            s.stake_value_chf = convert(s.stake_value, v.currency, ccy, as_of)
             if s.stake_value_chf is None:
                 s.missing_fx = True
+
+    # Positions without shares carry the value reported by the fund (e.g. an imported fund).
+    for inv in investments.filter(instrument="reported", reported_value__isnull=False).filter(
+            Q(reported_value_date__isnull=True) | Q(reported_value_date__lte=as_of)):
+        value = convert(inv.reported_value, inv.currency, ccy, as_of)
+        if value is None:
+            s.missing_fx = True
+            continue
+        s.stake_value_chf = (s.stake_value_chf or Decimal(0)) + value
 
     if s.invested_chf and s.stake_value_chf is not None:
         s.moic = ((s.stake_value_chf + s.realized_chf) / s.invested_chf).quantize(Decimal("0.01"))

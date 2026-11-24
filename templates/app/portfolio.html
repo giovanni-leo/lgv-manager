@@ -8,38 +8,43 @@
     <a href="?show=all" {% if show != "active" %}aria-current="page"{% endif %}>{% translate "Including exits" %}</a>
   </nav>
 </div>
-<dl class="facts totals card">
-  <div><dt>{% translate "Invested" %}</dt><dd>{{ totals.invested_chf|money:"CHF" }}</dd></div>
-  <div><dt>{% translate "Current value" %}</dt><dd>{{ totals.value_chf|money:"CHF" }}</dd></div>
-  <div><dt>{% translate "Realized" %}</dt><dd>{{ totals.realized_chf|money:"CHF" }}</dd></div>
-  <div><dt>{% translate "Multiple" %}</dt><dd>{{ totals.moic|multiple }}</dd></div>
-  <div><dt>{% translate "IRR" %}</dt><dd>{{ totals.irr|ratio_pct }}</dd></div>
-</dl>
-{% if totals.incomplete %}<p class="notice">{% translate "Some figures are missing a valuation or an exchange rate, so the totals are incomplete." %}</p>{% endif %}
-<div class="table-scroll card"><table class="list">
-  <thead><tr>
-    <th>{% translate "Company" %}</th><th class="num">{% translate "Our stake (FD)" %}</th><th class="num">{% translate "Invested" %}</th>
-    <th class="num">{% translate "Value" %}</th><th class="num">{% translate "Multiple" %}</th><th class="num">{% translate "IRR" %}</th>
-    <th class="num">{% translate "Runway" %}</th><th>{% translate "Last report" %}</th><th>{% translate "Next general assembly" %}</th>
-  </tr></thead>
-  <tbody>
-  {% for s in summaries %}
-    <tr>
-      <td><a href="{% url 'company_detail' s.company.pk %}"><strong>{{ s.company.name }}</strong></a>
-        {% if s.company.status != "portfolio" %} <span class="badge">{{ s.company.get_status_display }}</span>{% endif %}
-        {% if s.warnings %} <span class="badge warn" title="{% translate 'Cap table check' %}">⚠</span>{% endif %}</td>
-      <td class="num">{{ s.ownership.pct_fully_diluted|pct }}</td>
-      <td class="num">{{ s.invested_chf|money:"CHF" }}</td>
-      <td class="num">{{ s.stake_value_chf|money:"CHF" }}</td>
-      <td class="num">{{ s.moic|multiple }}</td>
-      <td class="num">{{ s.irr|ratio_pct }}</td>
-      <td class="num">{% if s.runway.months is not None %}<span class="runway-{{ s.runway.level }}">{{ s.runway.months }} {% translate "mo" %}</span>{% else %}–{% endif %}</td>
-      <td>{{ s.last_report|date:"Y-m-d"|default:"–" }}</td>
-      <td>{{ s.next_assembly|date:"Y-m-d"|default:"–" }}</td>
-    </tr>
-  {% empty %}
-    <tr><td colspan="9" class="muted">{% translate "No portfolio companies yet. A company appears here when its status is Portfolio, for example after a deal is marked as invested." %}</td></tr>
-  {% endfor %}
-  </tbody>
-</table></div>
+{% for sec in sections %}
+<section class="fund-section">
+  {% if sec.fund %}<h2 class="fund-title">{{ sec.fund.label }} <span class="muted small">{{ sec.fund.name }} · {{ sec.ccy }}</span></h2>{% endif %}
+  <dl class="facts totals card">
+    <div><dt>{% translate "Invested" %}</dt><dd>{{ sec.totals.invested_chf|money:sec.ccy }}</dd></div>
+    <div><dt>{% translate "Current value" %}</dt><dd>{{ sec.totals.value_chf|money:sec.ccy }}</dd></div>
+    <div><dt>{% translate "Realized" %}</dt><dd>{{ sec.totals.realized_chf|money:sec.ccy }}</dd></div>
+    <div><dt>{% translate "Multiple" %}</dt><dd>{{ sec.totals.moic|multiple }}</dd></div>
+    <div><dt>{% translate "IRR" %}</dt><dd>{{ sec.totals.irr|ratio_pct }}</dd></div>
+  </dl>
+  {% if sec.totals.incomplete %}<p class="notice">{% translate "Some figures are missing a valuation or an exchange rate, so the totals are incomplete." %}</p>{% endif %}
+  <div class="table-scroll card"><table class="list">
+    <thead><tr>
+      <th>{% translate "Company" %}</th><th class="num">{% translate "Our stake (FD)" %}</th><th class="num">{% translate "Invested" %}</th>
+      <th class="num">{% translate "Value" %}</th><th class="num">{% translate "Multiple" %}</th><th class="num">{% translate "IRR" %}</th>
+      <th class="num">{% translate "Runway" %}</th><th>{% translate "Last report" %}</th><th>{% translate "Next general assembly" %}</th>
+    </tr></thead>
+    <tbody>
+    {% for s in sec.summaries %}
+      <tr>
+        <td><a href="{% url 'company_detail' s.company.pk %}"><strong>{{ s.company.name }}</strong></a>
+          {% if s.company.status != "portfolio" %} <span class="badge">{{ s.company.get_status_display }}</span>{% endif %}
+          {% if s.warnings %} <span class="badge warn" title="{% translate 'Cap table check' %}">⚠</span>{% endif %}</td>
+        <td class="num">{{ s.ownership.pct_fully_diluted|pct }}</td>
+        <td class="num">{{ s.invested_chf|money:sec.ccy }}</td>
+        <td class="num">{{ s.stake_value_chf|money:sec.ccy }}</td>
+        <td class="num">{{ s.moic|multiple }}</td>
+        <td class="num">{{ s.irr|ratio_pct }}</td>
+        <td class="num">{% if s.runway.months is not None %}<span class="runway-{{ s.runway.level }}">{{ s.runway.months }} {% translate "mo" %}</span>{% else %}–{% endif %}</td>
+        <td>{{ s.last_report|date:"Y-m-d"|default:"–" }}</td>
+        <td>{{ s.next_assembly|date:"Y-m-d"|default:"–" }}</td>
+      </tr>
+    {% empty %}
+      <tr><td colspan="9" class="muted">{% translate "No portfolio companies yet. A company appears here when its status is Portfolio, for example after a deal is marked as invested." %}</td></tr>
+    {% endfor %}
+    </tbody>
+  </table></div>
+</section>
+{% endfor %}
 {% endblock %}

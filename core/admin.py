@@ -396,9 +396,9 @@ class RoundParticipantAdmin(ModelAdmin):
 
 @admin.register(InvestingEntity)
 class InvestingEntityAdmin(ModelAdmin):
-    list_display = ["name", "kind"]
-    search_fields = ["name"]
-    essential = ["name", "kind"]
+    list_display = ["code", "name", "kind", "base_currency"]
+    search_fields = ["name", "code"]
+    essential = ["name", "code", "kind", "base_currency"]
 
 
 @admin.register(FxRate)

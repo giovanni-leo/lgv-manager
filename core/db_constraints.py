@@ -47,6 +47,7 @@ FK_ACTIONS = [
     ("document_links", "document_id", "documents", "CASCADE"),
     ("document_folders", "company_id", "companies", "CASCADE"),
     ("documents", "folder_id", "document_folders", "SET NULL"),
+    ("deals", "fund_id", "investing_entities", "SET NULL"),
     ("funding_rounds", "company_id", "companies", "CASCADE"),
     ("funding_round_investors", "funding_round_id", "funding_rounds", "CASCADE"),
     ("funding_round_investors", "co_investor_id", "co_investors", "NO ACTION"),

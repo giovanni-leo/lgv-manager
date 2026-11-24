@@ -4,6 +4,7 @@ from datetime import timedelta
 
 from django import forms
 from django.conf import settings
+from django.contrib import messages
 from django.contrib.auth.decorators import permission_required
 from django.core.exceptions import PermissionDenied
 from django.db import transaction
@@ -15,7 +16,10 @@ from django.utils import timezone
 from django.views.decorators.http import require_POST
 
 from .models import (FUNNEL_STAGES, CoInvestor, Company, Contact, Deal, DealStage, Document, FundingRound,
+                     InvestingEntity,
                      Interaction, RoundParticipant)
+from .models.pipeline import FUND_REQUIRED_STAGES
+from .funds import active_fund
 from .sections import SECTIONS, formfield
 from .services.exit import exit_analysis
 from .services.people import sort_people
@@ -67,6 +71,8 @@ class NewDealForm(forms.Form):
     currency = forms.ChoiceField(choices=Deal._meta.get_field("currency").choices, initial="CHF")
     deadline = forms.DateField(required=False, widget=IsoDateInput())
     source_contact = forms.ModelChoiceField(queryset=Contact.objects.all(), required=False)
+    fund = forms.ModelChoiceField(queryset=InvestingEntity.objects.all(), required=False,
+                                  help_text="Needed from the Qualified stage on.")
 
     def clean(self):
         data = super().clean()
@@ -76,6 +82,12 @@ class NewDealForm(forms.Form):
 
 
 # --- Context builders -----------------------------------------------------------
+
+def _fund_positions(company):
+    """The position of each fund in the company, in the currency of the fund."""
+    funds = InvestingEntity.objects.filter(Q(investments__company=company) | Q(realizations__company=company)).distinct()
+    return [company_summary(company, fund=f) for f in funds]
+
 
 def _folders(company):
     """The company's document folders, each with its documents (newest first)."""
@@ -148,6 +160,7 @@ def company_context(request, company):
     return {**suggestions_context(company),
         "exit": exit_analysis(company, request.GET.get("exit")) if show_portfolio else None,
         "show_portfolio": show_portfolio,
+        "fund_positions": _fund_positions(company),
         "nav_section": "portfolio" if show_portfolio else "pipeline",
         "latest_round": funding_rounds[0] if funding_rounds else None,
         "next_event": _next_event(company, summary),
@@ -184,8 +197,11 @@ def _section_context(request, kind, obj):
 
 @permission_required("core.view_deal", raise_exception=True)
 def pipeline(request):
-    deals = list(Deal.objects.select_related("company").prefetch_related("participants__co_investor")
-                 .order_by("deadline", "next_step_due", "-opened_on"))
+    deals = Deal.objects.select_related("company", "fund").prefetch_related("participants__co_investor")
+    fund = active_fund(request)
+    if fund:                          # deals of the fund, and the new ones that have no fund yet
+        deals = deals.filter(Q(fund=fund) | Q(fund__isnull=True))
+    deals = list(deals.order_by("deadline", "next_step_due", "-opened_on"))
     columns = [{"stage": s, "deals": [d for d in deals if d.stage == s.value]} for s in FUNNEL_STAGES]
     parked = [{"stage": s, "deals": [d for d in deals if d.stage == s.value]}
               for s in (DealStage.ON_HOLD, DealStage.PASSED)]
@@ -212,7 +228,7 @@ def deal_new(request):
             deal = Deal.objects.create(
                 company=company, round_name=data["round_name"] or None, round_size=data["round_size"],
                 pre_money=data["pre_money"], proposed_ticket=data["proposed_ticket"], currency=data["currency"],
-                deadline=data["deadline"], source_contact=data["source_contact"])
+                deadline=data["deadline"], source_contact=data["source_contact"], fund=data["fund"])
         return redirect("deal_detail", pk=deal.pk)
     return render(request, "app/deal/new.html", {"form": form, "ai_enabled": settings.AI_ENABLED})
 
@@ -225,6 +241,16 @@ def deal_stage(request, pk):
     if stage not in DealStage.values:
         return HttpResponse(status=400)
     if stage != deal.stage:
+        if stage in FUND_REQUIRED_STAGES and deal.fund_id is None:
+            funds = list(InvestingEntity.objects.all()[:2])
+            if len(funds) == 1:
+                deal.fund = funds[0]                      # the only fund: nothing to choose
+            elif funds:
+                messages.error(request, "Choose the fund of this deal (Round card › Edit) before moving it to "
+                                        f"{DealStage(stage).label}.")
+                response = HttpResponse(status=204)
+                response["HX-Refresh"] = "true"
+                return response
         deal.stage = stage
         if stage in (DealStage.INVESTED, DealStage.PASSED) and not deal.closed_on:
             deal.closed_on = timezone.localdate()
@@ -289,10 +315,20 @@ def interaction_add(request):
 def portfolio(request):
     show = request.GET.get("show", "active")
     statuses = ["portfolio"] if show == "active" else ["portfolio", "exited", "written_off"]
-    companies = Company.objects.filter(status__in=statuses).order_by("name")
-    summaries = [company_summary(c) for c in companies]
-    return render(request, "app/portfolio.html", {
-        "summaries": summaries, "totals": portfolio_totals(summaries), "show": show})
+    selected = active_fund(request)
+    funds = [selected] if selected else list(InvestingEntity.objects.all())
+    sections = []
+    for fund in funds:                # one section per fund: each in its own currency, never mixed
+        companies = (Company.objects.filter(status__in=statuses)
+                     .filter(Q(investments__entity=fund) | Q(realizations__entity=fund)).distinct().order_by("name"))
+        summaries = [company_summary(c, fund=fund) for c in companies]
+        if summaries or selected:
+            sections.append({"fund": fund, "summaries": summaries, "totals": portfolio_totals(summaries),
+                             "ccy": fund.base_currency})
+    if not funds:                     # no fund set up yet: everything in CHF, as before
+        summaries = [company_summary(c) for c in Company.objects.filter(status__in=statuses).order_by("name")]
+        sections.append({"fund": None, "summaries": summaries, "totals": portfolio_totals(summaries), "ccy": "CHF"})
+    return render(request, "app/portfolio.html", {"sections": sections, "show": show})
 
 
 @permission_required("core.view_company", raise_exception=True)

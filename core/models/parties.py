@@ -20,15 +20,18 @@ class InvestingEntity(models.Model):
         FUND = "fund", _("Fund")
 
     name = models.TextField(_("name"), unique=True)
+    code = models.CharField(_("short name"), max_length=12, unique=True, null=True, blank=True,
+                            help_text=_("Shown in the fund selector and on cards, e.g. EFH, LGV1, LGV2."))
     kind = models.TextField(_("kind"), choices=Kind.choices)
-    base_currency = currency_field(verbose_name=_("base currency"))
+    base_currency = currency_field(verbose_name=_("fund currency"),
+                                   help_text=_("Totals of this fund are shown in this currency."))
     notes = models.TextField(_("notes"), blank=True, null=True)
 
     class Meta:
         db_table = "investing_entities"
         ordering = ["name"]
-        verbose_name = _("investing entity")
-        verbose_name_plural = _("investing entities")
+        verbose_name = _("fund")
+        verbose_name_plural = _("funds")
         constraints = [
             models.CheckConstraint(
                 condition=Q(kind__in=["company", "personal", "fund"]),
@@ -38,7 +41,11 @@ class InvestingEntity(models.Model):
         ]
 
     def __str__(self):
-        return self.name
+        return self.code or self.name
+
+    @property
+    def label(self):
+        return self.code or self.name
 
 
 class BoardRole(models.TextChoices):
